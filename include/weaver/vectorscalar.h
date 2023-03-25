@@ -1,97 +1,62 @@
-/*
- * This file is part of the Visual Computing Library (VCL) release under the
- * MIT license.
- *
- * Copyright (c) 2014 Basil Fierz
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 #pragma once
-
-// VCL configuration
-#include <vcl/config/global.h>
-#include <vcl/config/eigen.h>
 
 // C++ Standard Library
 #include <array>
 #include <initializer_list>
 
-// VCL
-#include <vcl/core/contract.h>
-#include <vcl/core/preprocessor.h>
+// FloatWeaver
 #include <vcl/math/math.h>
 
-namespace Vcl {
-	template<typename Scalar, int Width>
-	class VectorScalar
-	{
-	};
-}
-
 #if defined(VCL_VECTORIZE_SSE) || defined(VCL_VECTORIZE_AVX)
-#	include <vcl/core/simd/bool4_sse.h>
-#	include <vcl/core/simd/float4_sse.h>
-#	include <vcl/core/simd/int4_sse.h>
+#	include <weaver/bool4_sse.h>
+#	include <weaver/float4_sse.h>
+#	include <weaver/int4_sse.h>
 #endif
 
 #if defined VCL_VECTORIZE_AVX512
-#	include <vcl/core/simd/bool8_avx.h>
-#	include <vcl/core/simd/bool16_avx512.h>
-#	include <vcl/core/simd/float8_avx.h>
-#	include <vcl/core/simd/float16_avx512.h>
-#	include <vcl/core/simd/int8_avx.h>
-#	include <vcl/core/simd/int16_avx512.h>
+#	include <weaver/bool8_avx.h>
+#	include <weaver/bool16_avx512.h>
+#	include <weaver/float8_avx.h>
+#	include <weaver/float16_avx512.h>
+#	include <weaver/int8_avx.h>
+#	include <weaver/int16_avx512.h>
 #elif defined VCL_VECTORIZE_AVX
-#	include <vcl/core/simd/bool8_avx.h>
-#	include <vcl/core/simd/bool16_avx.h>
-#	include <vcl/core/simd/float8_avx.h>
-#	include <vcl/core/simd/float16_avx.h>
-#	include <vcl/core/simd/int8_avx.h>
-#	include <vcl/core/simd/int16_avx.h>
+#	include <weaver/bool8_avx.h>
+#	include <weaver/bool16_avx.h>
+#	include <weaver/float8_avx.h>
+#	include <weaver/float16_avx.h>
+#	include <weaver/int8_avx.h>
+#	include <weaver/int16_avx.h>
 #elif defined VCL_VECTORIZE_SSE
-#	include <vcl/core/simd/bool8_sse.h>
-#	include <vcl/core/simd/bool16_sse.h>
-#	include <vcl/core/simd/float8_sse.h>
-#	include <vcl/core/simd/float16_sse.h>
-#	include <vcl/core/simd/int8_sse.h>
-#	include <vcl/core/simd/int16_sse.h>
+#	include <weaver/bool8_sse.h>
+#	include <weaver/bool16_sse.h>
+#	include <weaver/float8_sse.h>
+#	include <weaver/float16_sse.h>
+#	include <weaver/int8_sse.h>
+#	include <weaver/int16_sse.h>
 #elif defined VCL_VECTORIZE_NEON
-#	include <vcl/core/simd/bool4_neon.h>
-#	include <vcl/core/simd/bool8_neon.h>
-#	include <vcl/core/simd/bool16_neon.h>
-#	include <vcl/core/simd/float4_neon.h>
-#	include <vcl/core/simd/float8_neon.h>
-#	include <vcl/core/simd/float16_neon.h>
-#	include <vcl/core/simd/int4_neon.h>
-#	include <vcl/core/simd/int8_neon.h>
-#	include <vcl/core/simd/int16_neon.h>
+#	include <weaver/bool4_neon.h>
+#	include <weaver/bool8_neon.h>
+#	include <weaver/bool16_neon.h>
+#	include <weaver/float4_neon.h>
+#	include <weaver/float8_neon.h>
+#	include <weaver/float16_neon.h>
+#	include <weaver/int4_neon.h>
+#	include <weaver/int8_neon.h>
+#	include <weaver/int16_neon.h>
 #else
-#	include <vcl/core/simd/bool4_ref.h>
-#	include <vcl/core/simd/bool8_ref.h>
-#	include <vcl/core/simd/bool16_ref.h>
-#	include <vcl/core/simd/float4_ref.h>
-#	include <vcl/core/simd/float8_ref.h>
-#	include <vcl/core/simd/float16_ref.h>
-#	include <vcl/core/simd/int4_ref.h>
-#	include <vcl/core/simd/int8_ref.h>
-#	include <vcl/core/simd/int16_ref.h>
-namespace Vcl {
+#	include <weaver/bool4_ref.h>
+#	include <weaver/bool8_ref.h>
+#	include <weaver/bool16_ref.h>
+#	include <weaver/float4_ref.h>
+#	include <weaver/float8_ref.h>
+#	include <weaver/float16_ref.h>
+#	include <weaver/int4_ref.h>
+#	include <weaver/int8_ref.h>
+#	include <weaver/int16_ref.h>
+
+namespace weaver
+{
 	template<typename Scalar, int Width>
 	VectorScalar<Scalar, Width> select(
 		const VectorScalar<bool, Width>& mask,

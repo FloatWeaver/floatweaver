@@ -1,38 +1,19 @@
-/* 
- * This file is part of the Visual Computing Library (VCL) release under the
- * MIT license.
- *
- * Copyright (c) 2014 Basil Fierz
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+// Copyright 2023 Basil Fierz
+// 
+// Use of this source code is governed by an MIT - style
+// license that can be found in the LICENSE file or at
+// https ://opensource.org/licenses/MIT.
+
 #pragma once
 
-// VCL configuration
-#include <vcl/config/global.h>
+#include <weaver/config.h>
 
 // C++ standard library
 #include <cstdint>
 
-#ifdef VCL_VECTORIZE_AVX
+#ifdef WEAVER_VECTORIZE_AVX
 
-#	include <vcl/core/simd/intrinsics_sse.h>
+#	include <weaver/intrinsics_sse.h>
 
 // Macros for GCC compatibility
 #	ifndef _mm256_set_m128
@@ -47,39 +28,39 @@
 #		define _mm256_set_m128i(/* __m128i */ hi, /* __m128i */ lo) _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 0x1)
 #	endif // _mm256_set_m128i
 
-#	define VCL_M256I_SIGNBIT _mm256_set1_epi32(int(0x80000000))
-#	define VCL_M256I_ALLBITS _mm256_set1_epi32(int(0xffffffff))
+#	define WEAVER_M256I_SIGNBIT _mm256_set1_epi32(int(0x80000000))
+#	define WEAVER_M256I_ALLBITS _mm256_set1_epi32(int(0xffffffff))
 
-namespace Vcl {
-	VCL_STRONG_INLINE __m256 _mm256_abs_ps(__m256 v)
+namespace weaver {
+	WEAVER_STRONG_INLINE __m256 _mm256_abs_ps(__m256 v)
 	{
-		return _mm256_andnot_ps(_mm256_castsi256_ps(VCL_M256I_SIGNBIT), v);
+		return _mm256_andnot_ps(_mm256_castsi256_ps(WEAVER_M256I_SIGNBIT), v);
 	}
-	VCL_STRONG_INLINE __m256 _mm256_sgn_ps(__m256 v)
+	WEAVER_STRONG_INLINE __m256 _mm256_sgn_ps(__m256 v)
 	{
-		return _mm256_and_ps(_mm256_or_ps(_mm256_and_ps(v, _mm256_castsi256_ps(VCL_M256I_SIGNBIT)), _mm256_set1_ps(1.0f)), _mm256_cmp_ps(v, _mm256_setzero_ps(), _CMP_NEQ_OQ));
+		return _mm256_and_ps(_mm256_or_ps(_mm256_and_ps(v, _mm256_castsi256_ps(WEAVER_M256I_SIGNBIT)), _mm256_set1_ps(1.0f)), _mm256_cmp_ps(v, _mm256_setzero_ps(), _CMP_NEQ_OQ));
 	}
 
-#	ifdef VCL_VECTORIZE_AVX2
-	VCL_STRONG_INLINE __m256i _mm256_cmplt_epi32(__m256i a, __m256i b)
+#	ifdef WEAVER_VECTORIZE_AVX2
+	WEAVER_STRONG_INLINE __m256i _mm256_cmplt_epi32(__m256i a, __m256i b)
 	{
 		return _mm256_cmpgt_epi32(b, a);
 	}
-	VCL_STRONG_INLINE __m256i _mm256_cmpneq_epi32(__m256i a, __m256i b)
+	WEAVER_STRONG_INLINE __m256i _mm256_cmpneq_epi32(__m256i a, __m256i b)
 	{
-		return _mm256_andnot_si256(_mm256_cmpeq_epi32(a, b), VCL_M256I_ALLBITS);
+		return _mm256_andnot_si256(_mm256_cmpeq_epi32(a, b), WEAVER_M256I_ALLBITS);
 	}
-	VCL_STRONG_INLINE __m256i _mm256_cmple_epi32(__m256i a, __m256i b)
+	WEAVER_STRONG_INLINE __m256i _mm256_cmple_epi32(__m256i a, __m256i b)
 	{
-		return _mm256_andnot_si256(_mm256_cmpgt_epi32(a, b), VCL_M256I_ALLBITS);
+		return _mm256_andnot_si256(_mm256_cmpgt_epi32(a, b), WEAVER_M256I_ALLBITS);
 	}
-	VCL_STRONG_INLINE __m256i _mm256_cmpge_epi32(__m256i a, __m256i b)
+	WEAVER_STRONG_INLINE __m256i _mm256_cmpge_epi32(__m256i a, __m256i b)
 	{
-		return _mm256_andnot_si256(_mm256_cmplt_epi32(a, b), VCL_M256I_ALLBITS);
+		return _mm256_andnot_si256(_mm256_cmplt_epi32(a, b), WEAVER_M256I_ALLBITS);
 	}
-#	endif // VCL_VECTORIZE_AVX2
+#	endif
 
-#	if !defined(VCL_COMPILER_MSVC) || _MSC_VER < 1920
+#	if !defined(WEAVER_COMPILER_MSVC) || _MSC_VER < 1920
 	__m256 _mm256_sin_ps(__m256 v);
 	__m256 _mm256_cos_ps(__m256 v);
 	__m256 _mm256_log_ps(__m256 v);
@@ -92,17 +73,17 @@ namespace Vcl {
 	__m256 _mm256_pow_ps(__m256 x, __m256 y);
 #	endif
 
-	VCL_STRONG_INLINE __m256 _mm256_cmpeq_ps(__m256 a, __m256 b)
+	WEAVER_STRONG_INLINE __m256 _mm256_cmpeq_ps(__m256 a, __m256 b)
 	{
 		return _mm256_cmp_ps(a, b, _CMP_EQ_OQ);
 	}
-	VCL_STRONG_INLINE __m256 _mm256_cmpneq_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_NEQ_OQ); }
-	VCL_STRONG_INLINE __m256 _mm256_cmplt_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_LT_OQ); }
-	VCL_STRONG_INLINE __m256 _mm256_cmple_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_LE_OQ); }
-	VCL_STRONG_INLINE __m256 _mm256_cmpgt_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OQ); }
-	VCL_STRONG_INLINE __m256 _mm256_cmpge_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GE_OQ); }
+	WEAVER_STRONG_INLINE __m256 _mm256_cmpneq_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_NEQ_OQ); }
+	WEAVER_STRONG_INLINE __m256 _mm256_cmplt_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_LT_OQ); }
+	WEAVER_STRONG_INLINE __m256 _mm256_cmple_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_LE_OQ); }
+	WEAVER_STRONG_INLINE __m256 _mm256_cmpgt_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GT_OQ); }
+	WEAVER_STRONG_INLINE __m256 _mm256_cmpge_ps(__m256 a, __m256 b) { return _mm256_cmp_ps(a, b, _CMP_GE_OQ); }
 
-	VCL_STRONG_INLINE __m256 _mm256_isinf_ps(__m256 x)
+	WEAVER_STRONG_INLINE __m256 _mm256_isinf_ps(__m256 x)
 	{
 		const __m256 sign_mask = _mm256_set1_ps(-0.0);
 		const __m256 inf = _mm256_set1_ps(std::numeric_limits<float>::infinity());
@@ -112,7 +93,7 @@ namespace Vcl {
 		return x;
 	}
 
-	VCL_STRONG_INLINE __m256 _mmVCL_rsqrt_ps(__m256 v)
+	WEAVER_STRONG_INLINE __m256 _mmWEAVER_rsqrt_ps(__m256 v)
 	{
 		const __m256 nr = _mm256_rsqrt_ps(v);
 		const __m256 muls = _mm256_mul_ps(_mm256_mul_ps(nr, nr), v);
@@ -122,7 +103,7 @@ namespace Vcl {
 		return _mm256_mul_ps(beta, gamma);
 	}
 
-	VCL_STRONG_INLINE __m256 _mmVCL_rcp_ps(__m256 v)
+	WEAVER_STRONG_INLINE __m256 _mmWEAVER_rcp_ps(__m256 v)
 	{
 		const __m256 nr = _mm256_rcp_ps(v);
 		const __m256 muls = _mm256_mul_ps(_mm256_mul_ps(nr, nr), v);
@@ -136,9 +117,9 @@ namespace Vcl {
 		return result;
 	}
 
-	VCL_STRONG_INLINE __m256i _mmVCL_add_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_add_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_add_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -153,9 +134,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_sub_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_sub_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_sub_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -170,9 +151,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_mullo_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_mullo_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_mullo_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -188,9 +169,9 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE __m256i _mmVCL_max_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_max_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_max_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -206,9 +187,9 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE __m256i _mmVCL_min_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_min_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_min_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -224,9 +205,9 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE __m256i _mmVCL_abs_epi32(__m256i x)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_abs_epi32(__m256i x)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_abs_epi32(x);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -239,9 +220,9 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE __m256i _mmVCL_cmpeq_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_cmpeq_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_cmpeq_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -256,9 +237,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_cmpneq_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_cmpneq_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_cmpneq_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -273,9 +254,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_cmplt_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_cmplt_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_cmplt_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -290,9 +271,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_cmple_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_cmple_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_cmple_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -307,9 +288,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_cmpgt_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_cmpgt_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_cmpgt_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -324,9 +305,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_cmpge_epi32(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_cmpge_epi32(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_cmpge_epi32(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -342,9 +323,9 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE __m256i _mmVCL_and_si256(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_and_si256(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_and_si256(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -359,9 +340,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_andnot_si256(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_andnot_si256(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_andnot_si256(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -376,9 +357,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_or_si256(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_or_si256(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_or_si256(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -393,9 +374,9 @@ namespace Vcl {
 		return _mm256_set_m128i(z1, z0);
 #	endif
 	}
-	VCL_STRONG_INLINE __m256i _mmVCL_xor_si256(__m256i x, __m256i y)
+	WEAVER_STRONG_INLINE __m256i _mmWEAVER_xor_si256(__m256i x, __m256i y)
 	{
-#	ifdef VCL_VECTORIZE_AVX2
+#	ifdef WEAVER_VECTORIZE_AVX2
 		return _mm256_xor_si256(x, y);
 #	else
 		const __m128i x0 = _mm256_extractf128_si256(x, 0);
@@ -411,7 +392,7 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_hmin_ps(__m256 v)
+	WEAVER_STRONG_INLINE float _mmWEAVER_hmin_ps(__m256 v)
 	{
 		const __m256 hilo = _mm256_permute2f128_ps(v, v, 0x81);
 		__m256 redux = _mm256_min_ps(v, hilo);
@@ -421,7 +402,7 @@ namespace Vcl {
 		return _mm_cvtss_f32(_mm256_castps256_ps128(redux));
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_hmax_ps(__m256 v)
+	WEAVER_STRONG_INLINE float _mmWEAVER_hmax_ps(__m256 v)
 	{
 		const __m256 hilo = _mm256_permute2f128_ps(v, v, 0x81);
 		__m256 redux = _mm256_max_ps(v, hilo);
@@ -431,7 +412,7 @@ namespace Vcl {
 		return _mm_cvtss_f32(_mm256_castps256_ps128(redux));
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_dp_ps(__m256 a, __m256 b)
+	WEAVER_STRONG_INLINE float _mmWEAVER_dp_ps(__m256 a, __m256 b)
 	{
 		typedef union
 		{
@@ -443,7 +424,7 @@ namespace Vcl {
 		return F32{ dp }.a[0] + F32{ dp }.a[4];
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_extract_ps(__m256 v, int i)
+	WEAVER_STRONG_INLINE float _mmWEAVER_extract_ps(__m256 v, int i)
 	{
 #	if 1
 		typedef union
@@ -487,7 +468,7 @@ namespace Vcl {
 #	endif
 	}
 
-	VCL_STRONG_INLINE int _mmVCL_extract_epi32(__m256i v, int i)
+	WEAVER_STRONG_INLINE int _mmWEAVER_extract_epi32(__m256i v, int i)
 	{
 #	if 1
 		typedef union
@@ -531,4 +512,4 @@ namespace Vcl {
 #	endif
 	}
 }
-#endif // VCL_VECTORIZE_AVX
+#endif

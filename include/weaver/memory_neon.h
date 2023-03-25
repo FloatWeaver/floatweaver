@@ -1,39 +1,21 @@
-/*
- * This file is part of the Visual Computing Library (VCL) release under the
- * MIT license.
- *
- * Copyright (c) 2014 Basil Fierz
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+// Copyright 2023 Basil Fierz
+// 
+// Use of this source code is governed by an MIT - style
+// license that can be found in the LICENSE file or at
+// https ://opensource.org/licenses/MIT.
+
 #pragma once
 
-// VCL configuration
-#include <vcl/config/global.h>
+// Eigen
+#include <Eigen/Core>
 
-// VCL
-#include <vcl/core/simd/vectorscalar.h>
-#include <vcl/core/simd/intrinsics_neon.h>
+// FloatWeaver
+#include <weaver/intrinsics_neon.h>
+#include <weaver/vector_types.h>
 
-namespace Vcl {
-#if defined VCL_VECTORIZE_NEON
-	VCL_STRONG_INLINE float32x4_t gather(float const* base, int32x4_t vindex)
+namespace weaver {
+#if defined WEAVER_VECTORIZE_NEON
+	WEAVER_STRONG_INLINE float32x4_t gather(float const* base, int32x4_t vindex)
 	{
 		int idx[4];
 		vst1q_s32(idx, vindex);
@@ -48,18 +30,18 @@ namespace Vcl {
 		return vld1q_f32(data);
 	}
 
-	VCL_STRONG_INLINE VectorScalar<float, 4> gather(float const* base, const VectorScalar<int, 4>& vindex)
+	WEAVER_STRONG_INLINE VectorScalar<float, 4> gather(float const* base, const VectorScalar<int, 4>& vindex)
 	{
 		return VectorScalar<float, 4>(gather(base, vindex.get(0)));
 	}
 
-	VCL_STRONG_INLINE VectorScalar<float, 8> gather(float const* base, const VectorScalar<int, 8>& vindex)
+	WEAVER_STRONG_INLINE VectorScalar<float, 8> gather(float const* base, const VectorScalar<int, 8>& vindex)
 	{
 		return VectorScalar<float, 8>(
 			gather(base, vindex.get(0)),
 			gather(base, vindex.get(1)));
 	}
-	VCL_STRONG_INLINE VectorScalar<float, 16> gather(float const* base, const VectorScalar<int, 16>& vindex)
+	WEAVER_STRONG_INLINE VectorScalar<float, 16> gather(float const* base, const VectorScalar<int, 16>& vindex)
 	{
 		return VectorScalar<float, 16>(
 			gather(base, vindex.get(0)),
@@ -68,18 +50,18 @@ namespace Vcl {
 			gather(base, vindex.get(3)));
 	}
 
-	VCL_STRONG_INLINE void load(float4& value, const float* base)
+	WEAVER_STRONG_INLINE void load(float4& value, const float* base)
 	{
 		value = float4{ vld1q_f32(base) };
 	}
 
-	VCL_STRONG_INLINE void load(int4& value, const int* base)
+	WEAVER_STRONG_INLINE void load(int4& value, const int* base)
 	{
 		value = int4{ vld1q_s32(base) };
 	}
 
 	// https://software.intel.com/en-us/articles/3d-vector-normalization-using-256-bit-intel-advanced-vector-extensions-intel-avx
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		float32x4_t& x,
 		float32x4_t& y,
 		float32x4_t& z,
@@ -93,7 +75,7 @@ namespace Vcl {
 		z = reg.val[2];
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		float32x4_t& x,
 		float32x4_t& y,
 		float32x4_t& z,
@@ -115,7 +97,7 @@ namespace Vcl {
 		w = vcombine_f32(vget_high_f32(t0.val[1]), vget_high_f32(t1.val[1]));
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3f* base,
 		const float32x4_t& x,
 		const float32x4_t& y,
@@ -127,7 +109,7 @@ namespace Vcl {
 		vst3q_f32(p, reg);
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<float4, 3, 1>& loaded,
 		const Eigen::Vector3f* base)
 	{
@@ -139,7 +121,7 @@ namespace Vcl {
 		loaded(2) = float4(z0);
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<int4, 3, 1>& loaded,
 		const Eigen::Vector3i* base)
 	{
@@ -151,7 +133,7 @@ namespace Vcl {
 		loaded(2) = int4{ vreinterpretq_s32_f32(z0) };
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<float4, 4, 1>& loaded,
 		const Eigen::Vector4f* base)
 	{
@@ -163,7 +145,7 @@ namespace Vcl {
 		loaded(2) = float4(z0);
 		loaded(3) = float4(w0);
 	}
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<int4, 4, 1>& loaded,
 		const Eigen::Vector4i* base)
 	{
@@ -176,7 +158,7 @@ namespace Vcl {
 		loaded(3) = int4{ vreinterpretq_s32_f32(w0) };
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3f* base,
 		const Eigen::Matrix<float4, 3, 1>& value)
 	{
@@ -187,7 +169,7 @@ namespace Vcl {
 			value(2).get(0));
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3i* base,
 		const Eigen::Matrix<int4, 3, 1>& value)
 	{
@@ -198,7 +180,7 @@ namespace Vcl {
 			vreinterpretq_f32_s32(value(2).get(0)));
 	}
 
-	VCL_STRONG_INLINE std::array<float4, 2> interleave(const float4& a, const float4& b) noexcept
+	WEAVER_STRONG_INLINE std::array<float4, 2> interleave(const float4& a, const float4& b) noexcept
 	{
 		float32x2_t a1 = vget_low_f32(a.get(0));
 		float32x2_t b1 = vget_low_f32(b.get(0));
@@ -213,7 +195,7 @@ namespace Vcl {
 		return { low, high };
 	}
 
-	VCL_STRONG_INLINE std::array<float8, 2> interleave(const float8& a, const float8& b) noexcept
+	WEAVER_STRONG_INLINE std::array<float8, 2> interleave(const float8& a, const float8& b) noexcept
 	{
 		const auto l0h0 = interleave(float4(a.get(0)), float4(b.get(0)));
 		const auto l1h1 = interleave(float4(a.get(1)), float4(b.get(1)));
@@ -221,7 +203,7 @@ namespace Vcl {
 		return { float8(l0h0[0].get(0), l0h0[1].get(0)), float8(l1h1[0].get(0), l1h1[1].get(0)) };
 	}
 
-	VCL_STRONG_INLINE std::array<float16, 2> interleave(const float16& a, const float16& b) noexcept
+	WEAVER_STRONG_INLINE std::array<float16, 2> interleave(const float16& a, const float16& b) noexcept
 	{
 		const auto l0h0 = interleave(float4(a.get(0)), float4(b.get(0)));
 		const auto l1h1 = interleave(float4(a.get(1)), float4(b.get(1)));
@@ -231,17 +213,17 @@ namespace Vcl {
 		return { float16(l0h0[0].get(0), l0h0[1].get(0), l1h1[0].get(0), l1h1[1].get(0)), float16(l2h2[0].get(0), l2h2[1].get(0), l3h3[0].get(0), l3h3[1].get(0)) };
 	}
 
-	VCL_STRONG_INLINE void load(float8& value, const float* base)
+	WEAVER_STRONG_INLINE void load(float8& value, const float* base)
 	{
 		value = float8{ vld1q_f32(base), vld1q_f32(base + 4) };
 	}
 
-	VCL_STRONG_INLINE void load(int8& value, const int* base)
+	WEAVER_STRONG_INLINE void load(int8& value, const int* base)
 	{
 		value = int8{ vld1q_s32(base), vld1q_s32(base + 4) };
 	}
 
-	VCL_STRONG_INLINE void load(float16& value, const float* base)
+	WEAVER_STRONG_INLINE void load(float16& value, const float* base)
 	{
 		value = float16{
 			vld1q_f32(base + 0), vld1q_f32(base + 4),
@@ -249,7 +231,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void load(int16& value, const int* base)
+	WEAVER_STRONG_INLINE void load(int16& value, const int* base)
 	{
 		value = int16{
 			vld1q_s32(base + 0), vld1q_s32(base + 4),
@@ -257,7 +239,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<float8, 3, 1>& loaded,
 		const Eigen::Vector3f* base)
 	{
@@ -271,7 +253,7 @@ namespace Vcl {
 			float8(z0, z1)
 		};
 	}
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<int8, 3, 1>& loaded,
 		const Eigen::Vector3i* base)
 	{
@@ -286,7 +268,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<float8, 4, 1>& loaded,
 		const Eigen::Vector4f* base)
 	{
@@ -299,7 +281,7 @@ namespace Vcl {
 		loaded(2) = float8(z0, z1);
 		loaded(3) = float8(w0, w1);
 	}
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<int8, 4, 1>& loaded,
 		const Eigen::Vector4i* base)
 	{
@@ -313,7 +295,7 @@ namespace Vcl {
 		loaded(3) = int8{ vreinterpretq_s32_f32(w0), vreinterpretq_s32_f32(w1) };
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<float16, 3, 1>& loaded,
 		const Eigen::Vector3f* base)
 	{
@@ -330,7 +312,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<int16, 3, 1>& loaded,
 		const Eigen::Vector3i* base)
 	{
@@ -347,7 +329,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<float16, 4, 1>& loaded,
 		const Eigen::Vector4f* base)
 	{
@@ -365,7 +347,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void load(
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<int16, 4, 1>& loaded,
 		const Eigen::Vector4i* base)
 	{
@@ -383,7 +365,7 @@ namespace Vcl {
 		};
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3f* base,
 		const Eigen::Matrix<float8, 3, 1>& value)
 	{
@@ -391,7 +373,7 @@ namespace Vcl {
 		store(base + 4, value(0).get(1), value(1).get(1), value(2).get(1));
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3i* base,
 		const Eigen::Matrix<int8, 3, 1>& value)
 	{
@@ -408,7 +390,7 @@ namespace Vcl {
 			vreinterpretq_f32_s32(value(2).get(1)));
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3f* base,
 		const Eigen::Matrix<float16, 3, 1>& value)
 	{
@@ -418,7 +400,7 @@ namespace Vcl {
 		store(base + 12, value(0).get(3), value(1).get(3), value(2).get(3));
 	}
 
-	VCL_STRONG_INLINE void store(
+	WEAVER_STRONG_INLINE void store(
 		Eigen::Vector3i* base,
 		const Eigen::Matrix<int16, 3, 1>& value)
 	{
@@ -445,5 +427,5 @@ namespace Vcl {
 			vreinterpretq_f32_s32(value(1).get(3)),
 			vreinterpretq_f32_s32(value(2).get(3)));
 	}
-#endif // defined VCL_VECTORIZE_NEON
+#endif
 }

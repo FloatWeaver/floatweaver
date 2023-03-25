@@ -1,38 +1,19 @@
-/* 
- * This file is part of the Visual Computing Library (VCL) release under the
- * MIT license.
- *
- * Copyright (c) 2014 Basil Fierz
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
+// Copyright 2023 Basil Fierz
+// 
+// Use of this source code is governed by an MIT - style
+// license that can be found in the LICENSE file or at
+// https ://opensource.org/licenses/MIT.
+
 #pragma once
 
-// VCL configuration
-#include <vcl/config/global.h>
+#include <weaver/config.h>
 
 // C++ standard library
 #include <limits>
 #include <cstdint>
 
-#if defined(VCL_VECTORIZE_NEON)
-namespace Vcl {
+#if defined(WEAVER_VECTORIZE_NEON)
+namespace weaver {
 	float32x4_t vsinq_f32(float32x4_t v);
 	float32x4_t vcosq_f32(float32x4_t v);
 	float32x4_t vlogq_f32(float32x4_t v);
@@ -44,7 +25,7 @@ namespace Vcl {
 	float32x4_t vatan2q_f32(float32x4_t y, float32x4_t x);
 	float32x4_t vpowq_f32(float32x4_t x, float32x4_t y);
 
-	VCL_STRONG_INLINE uint32x4_t visinfq_f32(float32x4_t x)
+	WEAVER_STRONG_INLINE uint32x4_t visinfq_f32(float32x4_t x)
 	{
 		const uint32x4_t sign_mask = vdupq_n_u32(0x7fffffff);
 		const uint32x4_t inf = vreinterpretq_u32_f32(vdupq_n_f32(std::numeric_limits<float>::infinity()));
@@ -56,7 +37,7 @@ namespace Vcl {
 	}
 
 	// From: Eigen/src/Core/arch/NEON/PacketMath.h
-	VCL_STRONG_INLINE float32x4_t vdivq_f32(float32x4_t x, float32x4_t y)
+	WEAVER_STRONG_INLINE float32x4_t weaver_vdivq_f32(float32x4_t x, float32x4_t y)
 	{
 		float32x4_t inv, restep, div;
 
@@ -82,7 +63,7 @@ namespace Vcl {
 		return div;
 	}
 
-	VCL_STRONG_INLINE float32x4_t vrcpq_f32(float32x4_t x)
+	WEAVER_STRONG_INLINE float32x4_t vrcpq_f32(float32x4_t x)
 	{
 		float32x4_t inv, restep;
 
@@ -101,7 +82,7 @@ namespace Vcl {
 		return inv;
 	}
 
-	VCL_STRONG_INLINE float32x4_t vrsqrtq_f32(float32x4_t x)
+	WEAVER_STRONG_INLINE float32x4_t vrsqrtq_f32(float32x4_t x)
 	{
 		const float32x4_t q_step_0 = vrsqrteq_f32(x);
 		// step
@@ -119,19 +100,19 @@ namespace Vcl {
 		return q_step_2;
 	}
 
-	float32x4_t vsqrtq_f32(float32x4_t x);
+	float32x4_t weaver_vsqrtq_f32(float32x4_t x);
 
-	VCL_STRONG_INLINE uint32x4_t vcneqq_f32(float32x4_t x, float32x4_t y)
+	WEAVER_STRONG_INLINE uint32x4_t vcneqq_f32(float32x4_t x, float32x4_t y)
 	{
 		return vmvnq_u32(vceqq_f32(x, y));
 	}
 
-	VCL_STRONG_INLINE float32x4_t vsgnq_f32(float32x4_t v)
+	WEAVER_STRONG_INLINE float32x4_t vsgnq_f32(float32x4_t v)
 	{
 		return vreinterpretq_f32_u32(vandq_u32(vorrq_u32(vandq_u32(vreinterpretq_u32_f32(v), vdupq_n_u32(0x80000000)), vreinterpretq_u32_f32(vdupq_n_f32(1.0f))), vcneqq_f32(v, vdupq_n_f32(0))));
 	}
 
-	VCL_STRONG_INLINE int vmovemaskq_u32(uint32x4_t a)
+	WEAVER_STRONG_INLINE int vmovemaskq_u32(uint32x4_t a)
 	{
 		static const uint32_t data[4] = { 1, 2, 4, 8 };
 		static const uint32x4_t movemask = vld1q_u32(data);
@@ -145,26 +126,26 @@ namespace Vcl {
 		return vget_lane_u32(t3, 0) | vget_lane_u32(t3, 1);
 	}
 
-	VCL_STRONG_INLINE int vmovemaskq_f32(float32x4_t a)
+	WEAVER_STRONG_INLINE int vmovemaskq_f32(float32x4_t a)
 	{
 		return vmovemaskq_u32(vreinterpretq_u32_f32(a));
 	}
 
-	VCL_STRONG_INLINE float32_t vpminq_f32(float32x4_t v)
+	WEAVER_STRONG_INLINE float32_t weaver_vpminq_f32(float32x4_t v)
 	{
 		float32x2_t tmp = vpmin_f32(vget_low_f32(v), vget_high_f32(v));
 		tmp = vpmin_f32(tmp, tmp);
 		return vget_lane_f32(tmp, 0);
 	}
 
-	VCL_STRONG_INLINE float32_t vpmaxq_f32(float32x4_t v)
+	WEAVER_STRONG_INLINE float32_t weaver_vpmaxq_f32(float32x4_t v)
 	{
 		float32x2_t tmp = vpmax_f32(vget_low_f32(v), vget_high_f32(v));
 		tmp = vpmax_f32(tmp, tmp);
 		return vget_lane_f32(tmp, 0);
 	}
 
-	VCL_STRONG_INLINE float32_t vdotq_f32(float32x4_t a, float32x4_t b)
+	WEAVER_STRONG_INLINE float32_t vdotq_f32(float32x4_t a, float32x4_t b)
 	{
 		float32x4_t prod = vmulq_f32(a, b);
 		float32x4_t sum1 = vaddq_f32(prod, vrev64q_f32(prod));
@@ -172,11 +153,11 @@ namespace Vcl {
 		return vgetq_lane_f32(sum2, 0);
 	}
 
-	/*__m128 _mmVCL_floor_ps(__m128 v);
+	/*__m128 _mmWEAVER_floor_ps(__m128 v);
 
-	VCL_STRONG_INLINE __m128i _mmVCL_mullo_epi32(__m128i a, __m128i b)
+	WEAVER_STRONG_INLINE __m128i _mmWEAVER_mullo_epi32(__m128i a, __m128i b)
 	{
-#ifdef VCL_VECTORIZE_SSE4_1
+#ifdef WEAVER_VECTORIZE_SSE4_1
 		return _mm_mullo_epi32(a, b);
 #else
 		__m128i tmp1 = _mm_mul_epu32(a, b); // mul 2,0
@@ -185,7 +166,7 @@ namespace Vcl {
 #endif
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_hmin_ps(__m128 v)
+	WEAVER_STRONG_INLINE float _mmWEAVER_hmin_ps(__m128 v)
 	{
 		__m128 data = v;             // [0, 1, 2, 3]
 		__m128 low = _mm_movehl_ps(data, data); // [2, 3, 2, 3]
@@ -195,7 +176,7 @@ namespace Vcl {
 		return _mm_cvtss_f32(accum);
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_hmax_ps(__m128 v)
+	WEAVER_STRONG_INLINE float _mmWEAVER_hmax_ps(__m128 v)
 	{
 		__m128 data = v;             // [0, 1, 2, 3]
 		__m128 high = _mm_movehl_ps(data, data); // [2, 3, 2, 3]
@@ -205,7 +186,7 @@ namespace Vcl {
 		return _mm_cvtss_f32(accum);
 	}
 
-	VCL_STRONG_INLINE float _mmVCL_extract_ps(__m128 v, int i)
+	WEAVER_STRONG_INLINE float _mmWEAVER_extract_ps(__m128 v, int i)
 	{
 		typedef union
 		{
@@ -216,7 +197,7 @@ namespace Vcl {
 		return F32 {v}.a[i];
 	}
 
-	VCL_STRONG_INLINE int _mmVCL_extract_epi32(__m128i v, int i)
+	WEAVER_STRONG_INLINE int _mmWEAVER_extract_epi32(__m128i v, int i)
 	{
 		typedef union
 		{
@@ -227,4 +208,4 @@ namespace Vcl {
 		return U32 {v}.a[i];
 	}*/
 }
-#endif // defined(VCL_VECTORIZE_NEON)
+#endif
