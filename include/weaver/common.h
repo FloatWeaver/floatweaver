@@ -697,6 +697,39 @@ namespace weaver {
 	{
 	};
 
+	template<typename T>
+	WEAVER_STRONG_INLINE constexpr T min(const T& x) noexcept
+	{
+		return x;
+	}
+
+	template<typename T>
+	WEAVER_STRONG_INLINE constexpr T max(const T& x) noexcept
+	{
+		return x;
+	}
+
+	WEAVER_STRONG_INLINE constexpr bool any(bool b) noexcept
+	{
+		return b;
+	}
+
+	WEAVER_STRONG_INLINE constexpr bool all(bool b) noexcept
+	{
+		return b;
+	}
+
+	WEAVER_STRONG_INLINE constexpr bool none(bool b) noexcept
+	{
+		return !b;
+	}
+
+	template<typename T>
+	WEAVER_STRONG_INLINE T select(bool mask, const T& a, const T& b) noexcept
+	{
+		return mask ? a : b;
+	}
+
 	namespace details {
 		template<typename T>
 		WEAVER_STRONG_INLINE T nop(T a) noexcept

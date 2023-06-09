@@ -10,6 +10,7 @@
 #include <Eigen/Core>
 
 // FloatWeaver
+#include <weaver/conditional.h>
 #include <weaver/vector_types.h>
 
 namespace Eigen {
@@ -98,3 +99,23 @@ namespace Eigen {
 	}
 }
 // clang-format on
+
+
+namespace weaver
+{
+	template<typename Scalar, int Width>
+	WEAVER_STRONG_INLINE void cswap(const VectorScalar<bool, Width>& mask, Eigen::Matrix<VectorScalar<Scalar, Width>, 3, 1>& a, Eigen::Matrix<VectorScalar<Scalar, Width>, 3, 1>& b)
+	{
+		cswap(mask, a(0), b(0));
+		cswap(mask, a(1), b(1));
+		cswap(mask, a(2), b(2));
+	}
+
+	template<typename Scalar, int Width>
+	WEAVER_STRONG_INLINE void cnswap(const VectorScalar<bool, Width>& mask, Eigen::Matrix<VectorScalar<Scalar, Width>, 3, 1>& a, Eigen::Matrix<VectorScalar<Scalar, Width>, 3, 1>& b)
+	{
+		cnswap(mask, a(0), b(0));
+		cnswap(mask, a(1), b(1));
+		cnswap(mask, a(2), b(2));
+	}
+}

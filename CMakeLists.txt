@@ -4,7 +4,7 @@ cmake_policy(SET CMP0048 NEW)
 project(FloatWeaver VERSION 0.1.0.0 LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/external/eigen/cmake")
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
 include(cmake/config.cmake)
 
@@ -17,6 +17,7 @@ target_link_libraries(weaver PUBLIC Eigen3::Eigen)
 set(INC
 	include/weaver/config.h
 	include/weaver/common.h
+	include/weaver/conditional.h
 	include/weaver/vectorscalar.h
 	include/weaver/vector_types.h
 
@@ -97,6 +98,7 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		src/tests/float.cpp
 		src/tests/int.cpp
 
+		src/tests/conditional.cpp
 		src/tests/eigen_alignedbox.cpp
 		src/tests/gather.cpp
 		src/tests/interleave.cpp
@@ -105,7 +107,7 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		src/tests/simd.cpp
 	)
 	weaver_target_sources(weaver_tests "src" ${WEAVER_TEST_SRC})
-		
+
 	set_target_properties(weaver_tests PROPERTIES
 		CXX_STANDARD ${WEAVER_CXX_STANDARD}
 		CXX_STANDARD_REQUIRED YES
