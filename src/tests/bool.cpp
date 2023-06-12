@@ -32,82 +32,125 @@
 #	include <weaver/bool16_ref.h>
 #endif
 
-TEST_CASE("booleans are initialized", "[bool]")
+namespace weaver
 {
-	using namespace weaver;
-
-	VectorScalar<bool, 4> b0{true, false, true, false};
-	CHECK(b0[0] == true);
-	CHECK(b0[1] == false);
-	CHECK(b0[2] == true);
-	CHECK(b0[3] == false);
-
-	VectorScalar<bool, 8> b1{ true, false, true, false, true, false, true, false };
-	CHECK(b1[0] == true);
-	CHECK(b1[1] == false);
-	CHECK(b1[2] == true);
-	CHECK(b1[3] == false);
-	CHECK(b1[4] == true);
-	CHECK(b1[5] == false);
-	CHECK(b1[6] == true);
-	CHECK(b1[7] == false);
-
-	VectorScalar<bool, 16> b2{ true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false };
-	CHECK(b2[0] == true);
-	CHECK(b2[1] == false);
-	CHECK(b2[2] == true);
-	CHECK(b2[3] == false);
-	CHECK(b2[4] == true);
-	CHECK(b2[5] == false);
-	CHECK(b2[6] == true);
-	CHECK(b2[7] == false);
-	CHECK(b2[8] == true);
-	CHECK(b2[9] == false);
-	CHECK(b2[10] == true);
-	CHECK(b2[11] == false);
-	CHECK(b2[12] == true);
-	CHECK(b2[13] == false);
-	CHECK(b2[14] == true);
-	CHECK(b2[15] == false);
+	using bool4 = VectorScalar<bool, 4>;
+	using bool8 = VectorScalar<bool, 8>;
+	using bool16 = VectorScalar<bool, 16>;
 }
 
-TEMPLATE_TEST_CASE("booleans are initialized the same", "[bool]", bool)
+#define WEAVER_SIMD_BOOLS                                               \
+	using bool4 = weaver::bool4;                                        \
+	using bool8 = weaver::bool8;                                        \
+	using bool16 = weaver::bool16;                                      \
+	bool4 b4_0{ true, false, true, false };                             \
+	bool4 b4_1{ false, true, false, true };                             \
+	bool8 b8_0{ true, false, true, false, true, false, true, false };   \
+	bool8 b8_1{ false, true, false, true, false, true, false, true };   \
+	bool16 b16_0{ true, false, true, false, true, false, true, false,   \
+				  true, false, true, false, true, false, true, false }; \
+	bool16 b16_1{ false, true, false, true, false, true, false, true,   \
+				  false, true, false, true, false, true, false, true }
+
+TEST_CASE("BoolN", "[bool][operation]")
 {
-	using namespace weaver;
+	WEAVER_SIMD_BOOLS;
 
-	const auto value = GENERATE(true, false);
+	using weaver::all;
+	using weaver::none;
 
-	VectorScalar<bool, 4> b0{ value };
-	CHECK(b0[0] == value);
-	CHECK(b0[1] == value);
-	CHECK(b0[2] == value);
-	CHECK(b0[3] == value);
+	SECTION("Initialize to same value")
+	{
+		CHECK(all(bool4{ true }));
+		CHECK(all(bool8{ true }));
+		CHECK(all(bool16{ true }));
 
-	VectorScalar<bool, 8> b1{ value };
-	CHECK(b1[0] == value);
-	CHECK(b1[1] == value);
-	CHECK(b1[2] == value);
-	CHECK(b1[3] == value);
-	CHECK(b1[4] == value);
-	CHECK(b1[5] == value);
-	CHECK(b1[6] == value);
-	CHECK(b1[7] == value);
+		CHECK(none(bool4{ false }));
+		CHECK(none(bool8{ false }));
+		CHECK(none(bool16{ false }));
+	}
 
-	VectorScalar<bool, 16> b2{ value };
-	CHECK(b2[0] == value);
-	CHECK(b2[1] == value);
-	CHECK(b2[2] == value);
-	CHECK(b2[3] == value);
-	CHECK(b2[4] == value);
-	CHECK(b2[5] == value);
-	CHECK(b2[6] == value);
-	CHECK(b2[7] == value);
-	CHECK(b2[8] == value);
-	CHECK(b2[9] == value);
-	CHECK(b2[10] == value);
-	CHECK(b2[11] == value);
-	CHECK(b2[12] == value);
-	CHECK(b2[13] == value);
-	CHECK(b2[14] == value);
-	CHECK(b2[15] == value);
+	SECTION("Initialize to different values")
+	{
+		bool4 b4{ b4_0 };
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(b4_0[i] == (i % 2 == 0));
+			CHECK(b4[i] == (i % 2 == 0));
+		}
+
+		bool8 b8{ b8_0 };
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(b8_0[i] == (i % 2 == 0));
+			CHECK(b8[i] == (i % 2 == 0));
+		}
+
+		bool16 b16{ b16_0 };
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(b16_0[i] == (i % 2 == 0));
+			CHECK(b16[i] == (i % 2 == 0));
+		}
+	}
+
+	SECTION("Assign")
+	{
+		bool4 b4{ true };
+		bool8 b8{ true };
+		bool16 b16{ true };
+
+		CHECK(all(b4));
+		CHECK(all(b8));
+		CHECK(all(b16));
+
+		b4 = b4_0;
+		b8 = b8_0;
+		b16 = b16_0;
+
+		for (int i = 0; i < 4; i++)
+			CHECK(b4[i] == (i % 2 == 0));
+
+		for (int i = 0; i < 8; i++)
+			CHECK(b8[i] == (i % 2 == 0));
+
+		for (int i = 0; i < 16; i++)
+			CHECK(b16[i] == (i % 2 == 0));
+	}
+
+	SECTION("And")
+	{
+		bool4 b4 = b4_0 && b4_0;
+		for (int i = 0; i < 4; i++)
+			CHECK(b4[i] == (i % 2 == 0));
+		CHECK(none(b4_0 && b4_1));
+
+		bool8 b8 = b8_0 && b8_0;
+		for (int i = 0; i < 8; i++)
+			CHECK(b8[i] == (i % 2 == 0));
+		CHECK(none(b8_0 && b8_1));
+
+		bool16 b16 = b16_0 && b16_0;
+		for (int i = 0; i < 16; i++)
+			CHECK(b16[i] == (i % 2 == 0));
+		CHECK(none(b16_0 && b16_1));
+	}
+
+	SECTION("Or")
+	{
+		bool4 b4 = b4_0 || b4_0;
+		for (int i = 0; i < 4; i++)
+			CHECK(b4[i] == (i % 2 == 0));
+		CHECK(all(b4_0 || b4_1));
+
+		bool8 b8 = b8_0 || b8_0;
+		for (int i = 0; i < 8; i++)
+			CHECK(b8[i] == (i % 2 == 0));
+		CHECK(all(b8_0 || b8_1));
+
+		bool16 b16 = b16_0 || b16_0;
+		for (int i = 0; i < 16; i++)
+			CHECK(b16[i] == (i % 2 == 0));
+		CHECK(all(b16_0 || b16_1));
+	}
 }

@@ -32,82 +32,136 @@
 #	include <weaver/float16_ref.h>
 #endif
 
-TEST_CASE("floats are initialized", "[float]")
+namespace weaver
 {
-	using namespace weaver;
-
-	VectorScalar<float, 4> b0{-1.0f, 0.0f, 1.0f, 0.0f};
-	CHECK(b0[0] == -1.0f);
-	CHECK(b0[1] == 0.0f);
-	CHECK(b0[2] == 1.0f);
-	CHECK(b0[3] == 0.0f);
-
-	VectorScalar<float, 8> b1{ -1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f };
-	CHECK(b1[0] == -1.0f);
-	CHECK(b1[1] == 0.0f);
-	CHECK(b1[2] == 1.0f);
-	CHECK(b1[3] == 0.0f);
-	CHECK(b1[4] == -1.0f);
-	CHECK(b1[5] == 0.0f);
-	CHECK(b1[6] == 1.0f);
-	CHECK(b1[7] == 0.0f);
-
-	VectorScalar<float, 16> b2{ -1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f };
-	CHECK(b2[0] == -1.0f);
-	CHECK(b2[1] == 0.0f);
-	CHECK(b2[2] == 1.0f);
-	CHECK(b2[3] == 0.0f);
-	CHECK(b2[4] == -1.0f);
-	CHECK(b2[5] == 0.0f);
-	CHECK(b2[6] == 1.0f);
-	CHECK(b2[7] == 0.0f);
-	CHECK(b2[8] == -1.0f);
-	CHECK(b2[9] == 0.0f);
-	CHECK(b2[10] == 1.0f);
-	CHECK(b2[11] == 0.0f);
-	CHECK(b2[12] == -1.0f);
-	CHECK(b2[13] == 0.0f);
-	CHECK(b2[14] == 1.0f);
-	CHECK(b2[15] == 0.0f);
+	using float4 = VectorScalar<float, 4>;
+	using float8 = VectorScalar<float, 8>;
+	using float16 = VectorScalar<float, 16>;
 }
 
-TEMPLATE_TEST_CASE("floats are initialized the same", "[float]", bool)
+#define WEAVER_SIMD_FLOATS                                                    \
+	using float4 = weaver::float4;                                            \
+	using float8 = weaver::float8;                                            \
+	using float16 = weaver::float16;                                          \
+	float4 f4_asc{ 1, 2, 3, 4 };                                              \
+	float4 f4_desc{ 4, 3, 2, 1 };                                             \
+	float8 f8_asc{ 1, 2, 3, 4, 5, 6, 7, 8 };                                  \
+	float8 f8_desc{ 8, 7, 6, 5, 4, 3, 2, 1 };                                 \
+	float16 f16_asc{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }; \
+	float16 f16_desc{ 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }
+
+TEST_CASE("FloatN", "[float][operation]")
 {
-	using namespace weaver;
+	WEAVER_SIMD_FLOATS;
 
-	const auto value = GENERATE(-1.0f, 0.0f, 1.0f);
+	SECTION("Initialize to same value")
+	{
+		float4 f4{ 1 };
+		float4 f4_2{ f4 };
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(f4[i] == 1);
+			CHECK(f4_2[i] == 1);
+		}
 
-	VectorScalar<float, 4> b0{ value };
-	CHECK(b0[0] == value);
-	CHECK(b0[1] == value);
-	CHECK(b0[2] == value);
-	CHECK(b0[3] == value);
+		float8 f8{ 1 };
+		float8 f8_2{ f8 };
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(f8[i] == 1);
+			CHECK(f8_2[i] == 1);
+		}
 
-	VectorScalar<float, 8> b1{ value };
-	CHECK(b1[0] == value);
-	CHECK(b1[1] == value);
-	CHECK(b1[2] == value);
-	CHECK(b1[3] == value);
-	CHECK(b1[4] == value);
-	CHECK(b1[5] == value);
-	CHECK(b1[6] == value);
-	CHECK(b1[7] == value);
+		float16 f16{ 1 };
+		float16 f16_2{ f16 };
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(f16[i] == 1);
+			CHECK(f16_2[i] == 1);
+		}
+	}
 
-	VectorScalar<float, 16> b2{ value };
-	CHECK(b2[0] == value);
-	CHECK(b2[1] == value);
-	CHECK(b2[2] == value);
-	CHECK(b2[3] == value);
-	CHECK(b2[4] == value);
-	CHECK(b2[5] == value);
-	CHECK(b2[6] == value);
-	CHECK(b2[7] == value);
-	CHECK(b2[8] == value);
-	CHECK(b2[9] == value);
-	CHECK(b2[10] == value);
-	CHECK(b2[11] == value);
-	CHECK(b2[12] == value);
-	CHECK(b2[13] == value);
-	CHECK(b2[14] == value);
-	CHECK(b2[15] == value);
+	SECTION("Initialize to different values")
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(f4_asc[i] == i + 1);
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(f8_asc[i] == i + 1);
+		}
+
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(f16_asc[i] == i + 1);
+		}
+	}
+
+	SECTION("Assign")
+	{
+		float4 f4{ 0 };
+		for (int i = 0; i < 4; i++)
+			CHECK(f4[i] == 0.0f);
+		f4 = f4_asc;
+		for (int i = 0; i < 4; i++)
+			CHECK(f4_asc[i] == i + 1);
+
+		float8 f8{ 0 };
+		for (int i = 0; i < 8; i++)
+			CHECK(f8[i] == 0.0f);
+		f8 = f8_asc;
+		for (int i = 0; i < 8; i++)
+			CHECK(f8_asc[i] == i + 1);
+
+		float16 f16{ 0 };
+		for (int i = 0; i < 16; i++)
+			CHECK(f16[i] == 0.0f);
+		f16 = f16_asc;
+		for (int i = 0; i < 16; i++)
+			CHECK(f16_asc[i] == i + 1);
+	}
+
+	SECTION("Addition")
+	{
+		float4 f4 = f4_asc + f4_asc;
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(f4[i] == f4_asc[i] + f4_asc[i]);
+		}
+
+		float8 f8 = f8_asc + f8_asc;
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(f8[i] == f8_asc[i] + f8_asc[i]);
+		}
+
+		float16 f16 = f16_asc + f16_asc;
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(f16[i] == f16_asc[i] + f16_asc[i]);
+		}
+	}
+
+	SECTION("Subtraction")
+	{
+		float4 f4 = f4_asc - f4_asc;
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(f4[i] == 0);
+		}
+
+		float8 f8 = f8_asc - f8_asc;
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(f8[i] == 0);
+		}
+
+		float16 f16 = f16_asc - f16_asc;
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(f16[i] == 0);
+		}
+	}
 }

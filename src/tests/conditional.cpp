@@ -20,7 +20,7 @@ void selectTest(
 	CHECK(weaver::all(selected == c));
 }
 
-TEST_CASE("Select floats", "operations")
+TEST_CASE("Select floatN given boolN", "[operation][float]")
 {
 	WEAVER_SIMD_FLOATS;
 
@@ -37,7 +37,7 @@ TEST_CASE("Select floats", "operations")
 	selectTest<float, 16>(float16{ 1 } / float16{ 0 } < 0, 1.0f, 0.0f, 0.0f);
 }
 
-TEST_CASE("Select ints", "operations")
+TEST_CASE("Select intN given boolN", "[operation][int]")
 {
 	selectTest<int, 4>(true, 1, 0, 1);
 	selectTest<int, 8>(true, 1, 0, 1);
@@ -73,7 +73,7 @@ void cswapTest(
 	}
 }
 
-TEST_CASE("Conditional Swap floats", "operations")
+TEST_CASE("Conditional Swap floatN given boolN", "[operation][float]")
 {
 	WEAVER_SIMD_FLOATS;
 
@@ -115,7 +115,7 @@ void cnswapTest(
 	}
 }
 
-TEST_CASE("Conditional Negative Swap floats", "operations")
+TEST_CASE("Conditional Negative Swap floatN given boolN", "[operation][float]")
 {
 	WEAVER_SIMD_FLOATS;
 

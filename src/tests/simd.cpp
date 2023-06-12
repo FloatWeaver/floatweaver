@@ -7,174 +7,7 @@
 // FloatWeaver
 #include "common.h"
 
-TEST_CASE("Construct bools", "operations")
-{
-	WEAVER_SIMD_BOOLS;
-
-	using weaver::all;
-	using weaver::none;
-
-	CHECK(all(bool4{ true }));
-	CHECK(all(bool8{ true }));
-	CHECK(all(bool16{ true }));
-
-	CHECK(none(bool4{ false }));
-	CHECK(none(bool8{ false }));
-	CHECK(none(bool16{ false }));
-
-	bool4 b4{ b4_0 };
-	for (int i = 0; i < 4; i++)
-	{
-		CHECK(b4_0[i] == (i % 2 == 0));
-		CHECK(b4[i] == (i % 2 == 0));
-	}
-
-	bool8 b8{ b8_0 };
-	for (int i = 0; i < 8; i++)
-	{
-		CHECK(b8_0[i] == (i % 2 == 0));
-		CHECK(b8[i] == (i % 2 == 0));
-	}
-
-	bool16 b16{ b16_0 };
-	for (int i = 0; i < 16; i++)
-	{
-		CHECK(b16_0[i] == (i % 2 == 0));
-		CHECK(b16[i] == (i % 2 == 0));
-	}
-}
-
-TEST_CASE("Assign bools", "operations")
-{
-	WEAVER_SIMD_BOOLS;
-
-	using weaver::all;
-
-	bool4 b4{ true };
-	bool8 b8{ true };
-	bool16 b16{ true };
-
-	CHECK(all(b4));
-	CHECK(all(b8));
-	CHECK(all(b16));
-
-	b4 = b4_0;
-	b8 = b8_0;
-	b16 = b16_0;
-
-	for (int i = 0; i < 4; i++)
-		CHECK(b4[i] == (i % 2 == 0));
-
-	for (int i = 0; i < 8; i++)
-		CHECK(b8[i] == (i % 2 == 0));
-
-	for (int i = 0; i < 16; i++)
-		CHECK(b16[i] == (i % 2 == 0));
-}
-
-TEST_CASE("And bools", "operations")
-{
-	WEAVER_SIMD_BOOLS;
-
-	using weaver::none;
-
-	bool4 b4 = b4_0 && b4_0;
-	for (int i = 0; i < 4; i++)
-		CHECK(b4[i] == (i % 2 == 0));
-	CHECK(none(b4_0 && b4_1));
-
-	bool8 b8 = b8_0 && b8_0;
-	for (int i = 0; i < 8; i++)
-		CHECK(b8[i] == (i % 2 == 0));
-	CHECK(none(b8_0 && b8_1));
-
-	bool16 b16 = b16_0 && b16_0;
-	for (int i = 0; i < 16; i++)
-		CHECK(b16[i] == (i % 2 == 0));
-	CHECK(none(b16_0 && b16_1));
-}
-
-TEST_CASE("Or bools", "operations")
-{
-	WEAVER_SIMD_BOOLS;
-
-	using weaver::all;
-
-	bool4 b4 = b4_0 || b4_0;
-	for (int i = 0; i < 4; i++)
-		CHECK(b4[i] == (i % 2 == 0));
-	CHECK(all(b4_0 || b4_1));
-
-	bool8 b8 = b8_0 || b8_0;
-	for (int i = 0; i < 8; i++)
-		CHECK(b8[i] == (i % 2 == 0));
-	CHECK(all(b8_0 || b8_1));
-
-	bool16 b16 = b16_0 || b16_0;
-	for (int i = 0; i < 16; i++)
-		CHECK(b16[i] == (i % 2 == 0));
-	CHECK(all(b16_0 || b16_1));
-}
-
-TEST_CASE("Construct floats", "operations")
-{
-	WEAVER_SIMD_FLOATS;
-
-	float4 f4{ 1 };
-	float4 f4_2{ f4 };
-	for (int i = 0; i < 4; i++)
-	{
-		CHECK(f4[i] == 1);
-		CHECK(f4_2[i] == 1);
-		CHECK(f4_asc[i] == i + 1);
-	}
-
-	float8 f8{ 1 };
-	float8 f8_2{ f8 };
-	for (int i = 0; i < 8; i++)
-	{
-		CHECK(f8[i] == 1);
-		CHECK(f8_2[i] == 1);
-		CHECK(f8_asc[i] == i + 1);
-	}
-
-	float16 f16{ 1 };
-	float16 f16_2{ f16 };
-	for (int i = 0; i < 16; i++)
-	{
-		CHECK(f16[i] == 1);
-		CHECK(f16_2[i] == 1);
-		CHECK(f16_asc[i] == i + 1);
-	}
-}
-
-TEST_CASE("Assign floats", "operations")
-{
-	WEAVER_SIMD_FLOATS;
-
-	float4 f4{ 0 };
-	for (int i = 0; i < 4; i++)
-		CHECK(f4[i] == 0.0f);
-	f4 = f4_asc;
-	for (int i = 0; i < 4; i++)
-		CHECK(f4_asc[i] == i + 1);
-
-	float8 f8{ 0 };
-	for (int i = 0; i < 8; i++)
-		CHECK(f8[i] == 0.0f);
-	f8 = f8_asc;
-	for (int i = 0; i < 8; i++)
-		CHECK(f8_asc[i] == i + 1);
-
-	float16 f16{ 0 };
-	for (int i = 0; i < 16; i++)
-		CHECK(f16[i] == 0.0f);
-	f16 = f16_asc;
-	for (int i = 0; i < 16; i++)
-		CHECK(f16_asc[i] == i + 1);
-}
-
-TEST_CASE("Negate floats", "operations")
+TEST_CASE("Negate FloatN", "[float][operation]")
 {
 	WEAVER_SIMD_FLOATS;
 
@@ -197,53 +30,7 @@ TEST_CASE("Negate floats", "operations")
 	}
 }
 
-TEST_CASE("Add floats", "operations")
-{
-	WEAVER_SIMD_FLOATS;
-
-	float4 f4 = f4_asc + f4_asc;
-	for (int i = 0; i < 4; i++)
-	{
-		CHECK(f4[i] == f4_asc[i] + f4_asc[i]);
-	}
-
-	float8 f8 = f8_asc + f8_asc;
-	for (int i = 0; i < 8; i++)
-	{
-		CHECK(f8[i] == f8_asc[i] + f8_asc[i]);
-	}
-
-	float16 f16 = f16_asc + f16_asc;
-	for (int i = 0; i < 16; i++)
-	{
-		CHECK(f16[i] == f16_asc[i] + f16_asc[i]);
-	}
-}
-
-TEST_CASE("Subtract floats", "operations")
-{
-	WEAVER_SIMD_FLOATS;
-
-	float4 f4 = f4_asc - f4_asc;
-	for (int i = 0; i < 4; i++)
-	{
-		CHECK(f4[i] == 0);
-	}
-
-	float8 f8 = f8_asc - f8_asc;
-	for (int i = 0; i < 8; i++)
-	{
-		CHECK(f8[i] == 0);
-	}
-
-	float16 f16 = f16_asc - f16_asc;
-	for (int i = 0; i < 16; i++)
-	{
-		CHECK(f16[i] == 0);
-	}
-}
-
-TEST_CASE("Check infinity", "operations")
+TEST_CASE("Check infinity", "[float][operation]")
 {
 	using weaver::all;
 	using weaver::float16;
@@ -260,7 +47,7 @@ TEST_CASE("Check infinity", "operations")
 	CHECK(none(isinf(float4(0) * float4(inf))));
 }
 
-TEST_CASE("Sqrt floats", "operations")
+TEST_CASE("Sqrt FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -294,41 +81,7 @@ TEST_CASE("Sqrt floats", "operations")
 	CHECK(all(equal(ref3, res3, float16(1e-5f))));
 }
 
-template<int W>
-void fltSignumTest()
-{
-	using weaver::all;
-	using weaver::sgn;
-
-	using floatN = weaver::VectorScalar<float, W>;
-
-	std::random_device rnd;
-	std::uniform_real_distribution<float> dist{ -10, 10 };
-
-	CHECK(all(sgn(floatN(0)) == floatN(0)));
-	CHECK(all(sgn(floatN(-0.0f)) == floatN(0)));
-	for (int i = 0; i < 50; i++)
-	{
-		const float d = dist(rnd);
-		if (d < 0)
-		{
-			CHECK(all(sgn(floatN(d)) == floatN(-1)));
-		}
-		else if (d > 0)
-		{
-			CHECK(all(sgn(floatN(d)) == floatN(1)));
-		}
-	}
-}
-
-TEST_CASE("Signum floats", "operations")
-{
-	fltSignumTest<4>();
-	fltSignumTest<8>();
-	fltSignumTest<16>();
-}
-
-TEST_CASE("Rsqrt floats", "operations")
+TEST_CASE("Rsqrt FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -362,7 +115,7 @@ TEST_CASE("Rsqrt floats", "operations")
 	CHECK(all(equal(ref3, res3, float16(1e-5f))));
 }
 
-TEST_CASE("Rcp floats", "operations")
+TEST_CASE("Rcp FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -396,7 +149,7 @@ TEST_CASE("Rcp floats", "operations")
 	CHECK(all(equal(ref3, res3, float16(1e-5f))));
 }
 
-TEST_CASE("Pow floats", "operations")
+TEST_CASE("Pow FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -430,7 +183,7 @@ TEST_CASE("Pow floats", "operations")
 	CHECK(all(equal(ref3, res3, float16(1e-5f))));
 }
 
-TEST_CASE("Log floats", "operations")
+TEST_CASE("Log FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -464,7 +217,7 @@ TEST_CASE("Log floats", "operations")
 	CHECK(all(equal(ref3, res3, float16(1e-5f))));
 }
 
-TEST_CASE("Abs floats", "operations")
+TEST_CASE("Abs FloatN", "[float][operation]")
 {
 	using weaver::all;
 
@@ -488,7 +241,7 @@ TEST_CASE("Abs floats", "operations")
 	CHECK(all(equal(res3, float16{ 1 })));
 }
 
-TEST_CASE("Dot floats", "operations")
+TEST_CASE("Dot FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -518,7 +271,41 @@ TEST_CASE("Dot floats", "operations")
 	CHECK(equal(ref * 4, res3, 1e-5f));
 }
 
-TEST_CASE("Horizontal min/max floats", "operations")
+template<int W>
+void fltSignumTest()
+{
+	using weaver::all;
+	using weaver::sgn;
+
+	using floatN = weaver::VectorScalar<float, W>;
+
+	std::random_device rnd;
+	std::uniform_real_distribution<float> dist{ -10, 10 };
+
+	CHECK(all(sgn(floatN(0)) == floatN(0)));
+	CHECK(all(sgn(floatN(-0.0f)) == floatN(0)));
+	for (int i = 0; i < 50; i++)
+	{
+		const float d = dist(rnd);
+		if (d < 0)
+		{
+			CHECK(all(sgn(floatN(d)) == floatN(-1)));
+		}
+		else if (d > 0)
+		{
+			CHECK(all(sgn(floatN(d)) == floatN(1)));
+		}
+	}
+}
+
+TEST_CASE("Signum FloatN", "[float][operation]")
+{
+	fltSignumTest<4>();
+	fltSignumTest<8>();
+	fltSignumTest<16>();
+}
+
+TEST_CASE("Horizontal min/max FloatN", "[float][operation]")
 {
 	using weaver::float16;
 	using weaver::float4;
@@ -537,65 +324,7 @@ TEST_CASE("Horizontal min/max floats", "operations")
 	CHECK(vec16.max() == 16);
 }
 
-TEST_CASE("Construct ints", "operations")
-{
-	WEAVER_SIMD_INTS;
-
-	int4 i4{ 1 };
-	int4 i4_2{ i4 };
-	for (int i = 0; i < 4; i++)
-	{
-		CHECK(i4[i] == 1);
-		CHECK(i4_2[i] == 1);
-		CHECK(i4_asc[i] == i + 1);
-	}
-
-	int8 i8{ 1 };
-	int8 i8_2{ i8 };
-	for (int i = 0; i < 8; i++)
-	{
-		CHECK(i8[i] == 1);
-		CHECK(i8_2[i] == 1);
-		CHECK(i8_asc[i] == i + 1);
-	}
-
-	int16 i16{ 1 };
-	int16 i16_2{ i16 };
-	for (int i = 0; i < 16; i++)
-	{
-		CHECK(i16[i] == 1);
-		CHECK(i16_2[i] == 1);
-		CHECK(i16_asc[i] == i + 1);
-	}
-}
-
-TEST_CASE("Assign ints", "operations")
-{
-	WEAVER_SIMD_INTS;
-
-	int4 i4{ 0 };
-	for (int i = 0; i < 4; i++)
-		CHECK(i4[i] == 0);
-	i4 = i4_asc;
-	for (int i = 0; i < 4; i++)
-		CHECK(i4_asc[i] == i + 1);
-
-	int8 i8{ 0 };
-	for (int i = 0; i < 8; i++)
-		CHECK(i8[i] == 0);
-	i8 = i8_asc;
-	for (int i = 0; i < 8; i++)
-		CHECK(i8_asc[i] == i + 1);
-
-	int16 i16{ 0 };
-	for (int i = 0; i < 16; i++)
-		CHECK(i16[i] == 0);
-	i16 = i16_asc;
-	for (int i = 0; i < 16; i++)
-		CHECK(i16_asc[i] == i + 1);
-}
-
-TEST_CASE("Abs ints", "operations")
+TEST_CASE("Abs IntN", "[int][operation]")
 {
 	using weaver::all;
 
@@ -619,7 +348,7 @@ TEST_CASE("Abs ints", "operations")
 	CHECK(all(res3 == int16{ 1 }));
 }
 
-TEST_CASE("Max ints", "operations")
+TEST_CASE("Max IntN", "[int][operation]")
 {
 	WEAVER_SIMD_INTS;
 
@@ -636,7 +365,7 @@ TEST_CASE("Max ints", "operations")
 		CHECK(i16[i] == std::max(i16_asc[i], i16_desc[i]));
 }
 
-TEST_CASE("Min ints", "operations")
+TEST_CASE("Min IntN", "[int][operation]")
 {
 	WEAVER_SIMD_INTS;
 
@@ -679,7 +408,7 @@ void intSignumTest()
 	}
 }
 
-TEST_CASE("Signum ints", "operations")
+TEST_CASE("Signum IntN", "[int][operation]")
 {
 	intSignumTest<4>();
 	intSignumTest<8>();

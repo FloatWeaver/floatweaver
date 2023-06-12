@@ -32,82 +32,136 @@
 #	include <weaver/int16_ref.h>
 #endif
 
-TEST_CASE("ints are initialized", "[int]")
+namespace weaver
 {
-	using namespace weaver;
-
-	VectorScalar<int, 4> b0{-1, 0, 1, 0};
-	CHECK(b0[0] == -1);
-	CHECK(b0[1] == 0);
-	CHECK(b0[2] == 1);
-	CHECK(b0[3] == 0);
-
-	VectorScalar<int, 8> b1{ -1, 0, 1, 0, -1, 0, 1, 0 };
-	CHECK(b1[0] == -1);
-	CHECK(b1[1] == 0);
-	CHECK(b1[2] == 1);
-	CHECK(b1[3] == 0);
-	CHECK(b1[4] == -1);
-	CHECK(b1[5] == 0);
-	CHECK(b1[6] == 1);
-	CHECK(b1[7] == 0);
-
-	VectorScalar<int, 16> b2{ -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0, -1, 0, 1, 0 };
-	CHECK(b2[0] == -1);
-	CHECK(b2[1] == 0);
-	CHECK(b2[2] == 1);
-	CHECK(b2[3] == 0);
-	CHECK(b2[4] == -1);
-	CHECK(b2[5] == 0);
-	CHECK(b2[6] == 1);
-	CHECK(b2[7] == 0);
-	CHECK(b2[8] == -1);
-	CHECK(b2[9] == 0);
-	CHECK(b2[10] == 1);
-	CHECK(b2[11] == 0);
-	CHECK(b2[12] == -1);
-	CHECK(b2[13] == 0);
-	CHECK(b2[14] == 1);
-	CHECK(b2[15] == 0);
+	using int4 = VectorScalar<int, 4>;
+	using int8 = VectorScalar<int, 8>;
+	using int16 = VectorScalar<int, 16>;
 }
 
-TEMPLATE_TEST_CASE("ints are initialized the same", "[int]", bool)
+#define WEAVER_SIMD_INTS                                                    \
+	using int4 = weaver::int4;                                              \
+	using int8 = weaver::int8;                                              \
+	using int16 = weaver::int16;                                            \
+	int4 i4_asc{ 1, 2, 3, 4 };                                              \
+	int4 i4_desc{ 4, 3, 2, 1 };                                             \
+	int8 i8_asc{ 1, 2, 3, 4, 5, 6, 7, 8 };                                  \
+	int8 i8_desc{ 8, 7, 6, 5, 4, 3, 2, 1 };                                 \
+	int16 i16_asc{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }; \
+	int16 i16_desc{ 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }
+
+TEST_CASE("IntN", "[int][operation]")
 {
-	using namespace weaver;
+	WEAVER_SIMD_INTS;
 
-	const auto value = GENERATE(-1, 0, 1);
+	SECTION("Initialize to same value")
+	{
+		int4 i4{ 1 };
+		int4 i4_2{ i4 };
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(i4[i] == 1);
+			CHECK(i4_2[i] == 1);
+		}
 
-	VectorScalar<int, 4> b0{ value };
-	CHECK(b0[0] == value);
-	CHECK(b0[1] == value);
-	CHECK(b0[2] == value);
-	CHECK(b0[3] == value);
+		int8 i8{ 1 };
+		int8 i8_2{ i8 };
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(i8[i] == 1);
+			CHECK(i8_2[i] == 1);
+		}
 
-	VectorScalar<int, 8> b1{ value };
-	CHECK(b1[0] == value);
-	CHECK(b1[1] == value);
-	CHECK(b1[2] == value);
-	CHECK(b1[3] == value);
-	CHECK(b1[4] == value);
-	CHECK(b1[5] == value);
-	CHECK(b1[6] == value);
-	CHECK(b1[7] == value);
+		int16 i16{ 1 };
+		int16 i16_2{ i16 };
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(i16[i] == 1);
+			CHECK(i16_2[i] == 1);
+		}
+	}
 
-	VectorScalar<int, 16> b2{ value };
-	CHECK(b2[0] == value);
-	CHECK(b2[1] == value);
-	CHECK(b2[2] == value);
-	CHECK(b2[3] == value);
-	CHECK(b2[4] == value);
-	CHECK(b2[5] == value);
-	CHECK(b2[6] == value);
-	CHECK(b2[7] == value);
-	CHECK(b2[8] == value);
-	CHECK(b2[9] == value);
-	CHECK(b2[10] == value);
-	CHECK(b2[11] == value);
-	CHECK(b2[12] == value);
-	CHECK(b2[13] == value);
-	CHECK(b2[14] == value);
-	CHECK(b2[15] == value);
+	SECTION("Initialize to different values")
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(i4_asc[i] == i + 1);
+		}
+
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(i8_asc[i] == i + 1);
+		}
+
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(i16_asc[i] == i + 1);
+		}
+	}
+
+	SECTION("Assign")
+	{
+		int4 i4{ 0 };
+		for (int i = 0; i < 4; i++)
+			CHECK(i4[i] == 0);
+		i4 = i4_asc;
+		for (int i = 0; i < 4; i++)
+			CHECK(i4_asc[i] == i + 1);
+
+		int8 i8{ 0 };
+		for (int i = 0; i < 8; i++)
+			CHECK(i8[i] == 0);
+		i8 = i8_asc;
+		for (int i = 0; i < 8; i++)
+			CHECK(i8_asc[i] == i + 1);
+
+		int16 i16{ 0 };
+		for (int i = 0; i < 16; i++)
+			CHECK(i16[i] == 0);
+		i16 = i16_asc;
+		for (int i = 0; i < 16; i++)
+			CHECK(i16_asc[i] == i + 1);
+	}
+
+	SECTION("Addition")
+	{
+		int4 i4 = i4_asc + i4_asc;
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(i4[i] == i4_asc[i] + i4_asc[i]);
+		}
+
+		int8 i8 = i8_asc + i8_asc;
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(i8[i] == i8_asc[i] + i8_asc[i]);
+		}
+
+		int16 i16 = i16_asc + i16_asc;
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(i16[i] == i16_asc[i] + i16_asc[i]);
+		}
+	}
+
+	SECTION("Subtraction")
+	{
+		int4 i4 = i4_asc - i4_asc;
+		for (int i = 0; i < 4; i++)
+		{
+			CHECK(i4[i] == 0);
+		}
+
+		int8 i8 = i8_asc - i8_asc;
+		for (int i = 0; i < 8; i++)
+		{
+			CHECK(i8[i] == 0);
+		}
+
+		int16 i16 = i16_asc - i16_asc;
+		for (int i = 0; i < 16; i++)
+		{
+			CHECK(i16[i] == 0);
+		}
+	}
 }

@@ -10,24 +10,15 @@
 // FloatWeaver
 #include <weaver/memory.h>
 
-#define WEAVER_SIMD_FLOATS                                                    \
-	using float4 = weaver::float4;                                            \
-	using float8 = weaver::float8;                                            \
-	using float16 = weaver::float16;                                          \
-	float4 f4_asc{ 1, 2, 3, 4 };                                              \
-	float4 f4_desc{ 4, 3, 2, 1 };                                             \
-	float8 f8_asc{ 1, 2, 3, 4, 5, 6, 7, 8 };                                  \
-	float8 f8_desc{ 8, 7, 6, 5, 4, 3, 2, 1 };                                 \
-	float16 f16_asc{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }; \
-	float16 f16_desc{ 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 };
+#include "common.h"
 
-TEST_CASE("Interleave values", "[memory]")
+TEST_CASE("Interleave floatN", "[memory][float]")
 {
 	using weaver::interleave;
 
-	WEAVER_SIMD_FLOATS
+	WEAVER_SIMD_FLOATS;
 
-		const auto f4 = interleave(f4_asc, f4_desc);
+	const auto f4 = interleave(f4_asc, f4_desc);
 	for (int i = 0; i < 2; i++)
 	{
 		CHECK(f4[0][2 * i + 0] == f4_asc[i]);
