@@ -107,6 +107,7 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		src/tests/load.cpp
 		src/tests/scatter.cpp
 		src/tests/simd.cpp
+		src/tests/store.cpp
 	)
 	weaver_target_sources(weaver_tests "src" ${WEAVER_TEST_SRC})
 

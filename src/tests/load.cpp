@@ -69,18 +69,92 @@ TEST_CASE("Load floatN", "[memory][float]")
 		CHECK(all(ref16 == f16));
 	}
 
+	SECTION("Vector2")
+	{
+		// Setup the memory
+		alignas(64) Eigen::Vector2f mem[] = {
+			Eigen::Vector2f(11.3805f, 6.10116f),
+			Eigen::Vector2f(11.8436f, 6.2012501f),
+			Eigen::Vector2f(12.1044f, 17.7034f),
+			Eigen::Vector2f(12.2649f, 17.577f),
+			Eigen::Vector2f(10.5683f, 10.9295f),
+			Eigen::Vector2f(10.3209f, 10.5937f),
+			Eigen::Vector2f(10.3329f, 14.9963f),
+			Eigen::Vector2f(10.0455f, 14.6964f),
+			Eigen::Vector2f(10.1965f, 11.632f),
+			Eigen::Vector2f(10.0714f, 11.5502f),
+			Eigen::Vector2f(14.5118f, 12.7151f),
+			Eigen::Vector2f(14.8073f, 12.6484f),
+			Eigen::Vector2f(9.82892f, 9.5343201f),
+			Eigen::Vector2f(9.9230499f, 9.7417801f),
+			Eigen::Vector2f(14.7326f, 8.8948402f),
+			Eigen::Vector2f(14.716299f, 8.9874901f),
+			Eigen::Vector2f(5.2040798f, 15.250501f),
+			Eigen::Vector2f(4.7869202f, 15.2801f),
+			Eigen::Vector2f(19.1418f, 7.4918198f),
+			Eigen::Vector2f(19.0258f, 7.7041f),
+			Eigen::Vector2f(14.6468f, 9.0783501f),
+			Eigen::Vector2f(6.0853699f, 18.201f),
+			Eigen::Vector2f(6.24683f, 18.6397f),
+			Eigen::Vector2f(6.0786701f, 15.605f),
+			Eigen::Vector2f(6.1671398f, 16.039101f),
+			Eigen::Vector2f(15.194501f, 10.1853f),
+			Eigen::Vector2f(15.128301f, 10.5658f),
+			Eigen::Vector2f(4.12616f, 10.6454f),
+			Eigen::Vector2f(3.7431301f, 11.1153f),
+			Eigen::Vector2f(18.2603f, 12.7318f)
+		};
+
+		Eigen::Vector2f f;
+		weaver::load(f, mem + 3);
+		CHECK(mem[3] == f);
+
+		Eigen::Matrix<float4, 2, 1> ref4{
+			float4(mem[5](0), mem[6](0), mem[7](0), mem[8](0)),
+			float4(mem[5](1), mem[6](1), mem[7](1), mem[8](1))
+		};
+
+		Eigen::Matrix<float4, 2, 1> f4;
+		weaver::load(f4, mem + 5);
+		CHECK(all(ref4(0) == f4(0)));
+		CHECK(all(ref4(1) == f4(1)));
+
+		Eigen::Matrix<float8, 2, 1> ref8{
+			float8(
+				mem[9](0), mem[10](0), mem[11](0), mem[12](0),
+				mem[13](0), mem[14](0), mem[15](0), mem[16](0)),
+			float8(
+				mem[9](1), mem[10](1), mem[11](1), mem[12](1),
+				mem[13](1), mem[14](1), mem[15](1), mem[16](1))
+		};
+
+		Eigen::Matrix<float8, 2, 1> f8;
+		weaver::load(f8, mem + 9);
+		CHECK(all(ref8(0) == f8(0)));
+		CHECK(all(ref8(1) == f8(1)));
+
+		Eigen::Matrix<float16, 2, 1> ref16{
+			float16(
+				mem[7](0), mem[8](0), mem[9](0), mem[10](0),
+				mem[11](0), mem[12](0), mem[13](0), mem[14](0),
+				mem[15](0), mem[16](0), mem[17](0), mem[18](0),
+				mem[19](0), mem[20](0), mem[21](0), mem[22](0)),
+
+			float16(
+				mem[7](1), mem[8](1), mem[9](1), mem[10](1),
+				mem[11](1), mem[12](1), mem[13](1), mem[14](1),
+				mem[15](1), mem[16](1), mem[17](1), mem[18](1),
+				mem[19](1), mem[20](1), mem[21](1), mem[22](1))
+		};
+
+		Eigen::Matrix<float16, 2, 1> f16;
+		weaver::load(f16, mem + 7);
+		CHECK(all(ref16(0) == f16(0)));
+		CHECK(all(ref16(1) == f16(1)));
+	}
+
 	SECTION("Vector3")
 	{
-		using weaver::float16;
-		using weaver::float4;
-		using weaver::float8;
-
-		using weaver::int16;
-		using weaver::int4;
-		using weaver::int8;
-
-		using weaver::all;
-
 		// Setup the memory
 		alignas(64) Eigen::Vector3f mem[] = {
 			Eigen::Vector3f(11.3805f, 6.10116f, 11.6117f),
@@ -178,16 +252,6 @@ TEST_CASE("Load floatN", "[memory][float]")
 
 	SECTION("Vector4")
 	{
-		using weaver::float16;
-		using weaver::float4;
-		using weaver::float8;
-
-		using weaver::int16;
-		using weaver::int4;
-		using weaver::int8;
-
-		using weaver::all;
-
 		// Setup the memory
 		alignas(64) Eigen::Vector4f mem[] = {
 			Eigen::Vector4f(0, 1, 3, 4),
