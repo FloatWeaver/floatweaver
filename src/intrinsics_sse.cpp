@@ -13,8 +13,14 @@ WEAVER_BEGIN_EXTERNAL_HEADERS
 
 WEAVER_END_EXTERNAL_HEADERS
 
+// FloatWeaver
+#	include <weaver/vector_types.h>
+
 #	if !defined(WEAVER_COMPILER_MSVC) || _MSC_VER < 1920
-	__m128 _mm_sin_ps(__m128 v) noexcept
+
+using namespace weaver;
+
+__m128 _mm_sin_ps(__m128 v) noexcept
 {
 	return sin_ps(v);
 }

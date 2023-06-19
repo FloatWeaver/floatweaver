@@ -1,4 +1,3 @@
-
 # Enable Visual Studio solution folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -13,6 +12,7 @@ elseif(MSVC)
 else()
 	set(WEAVER_COMPILER_UNKNOWN ON)
 endif()
+
 message(STATUS "Detected compiler: ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -20,6 +20,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 else()
 	set(WEAVER_ADDRESS_SIZE "32")
 endif()
+
 message(STATUS "Compiling for ${WEAVER_ADDRESS_SIZE}bit machine")
 
 set(WEAVER_CXX_STANDARD "17" CACHE STRING "C++ standard")
@@ -32,7 +33,6 @@ message(STATUS "Compiling for ${WEAVER_VECTORIZE}")
 
 # Configure the compiler options a target
 function(weaver_configure_target tgt)
-
 	message(STATUS "Configure target: ${tgt}")
 
 	set_target_properties(${tgt} PROPERTIES
@@ -40,31 +40,40 @@ function(weaver_configure_target tgt)
 		CXX_STANDARD_REQUIRED YES
 		CXX_EXTENSIONS NO
 	)
-	#target_compile_features(weaver PUBLIC cxx_std_${WEAVER_CXX_STANDARD})
 
+	# target_compile_features(weaver PUBLIC cxx_std_${WEAVER_CXX_STANDARD})
 	if(WEAVER_VECTORIZE STREQUAL "SSE 4.2")
+		set(WEAVER_VECTORIZE_SSE4_2 TRUE)
 		target_compile_definitions(${tgt} PUBLIC WEAVER_VECTORIZE_SSE4_2)
 	elseif(WEAVER_VECTORIZE STREQUAL "AVX")
+		set(WEAVER_VECTORIZE_AVX TRUE)
 		target_compile_definitions(${tgt} PUBLIC WEAVER_VECTORIZE_AVX)
 	elseif(WEAVER_VECTORIZE STREQUAL "AVX 2")
+		set(WEAVER_VECTORIZE_AVX2 TRUE)
 		target_compile_definitions(${tgt} PUBLIC WEAVER_VECTORIZE_AVX2)
 	elseif(WEAVER_VECTORIZE STREQUAL "AVX 512")
+		set(WEAVER_VECTORIZE_AVX512 TRUE)
 		target_compile_definitions(${tgt} PUBLIC WEAVER_VECTORIZE_AVX512)
 	elseif(WEAVER_VECTORIZE STREQUAL "NEON")
+		set(WEAVER_VECTORIZE_NEON TRUE)
 		target_compile_definitions(${tgt} PUBLIC WEAVER_VECTORIZE_NEON)
 	endif()
-	
+
 	if(WEAVER_COMPILER_MSVC)
 		# Disable buffer security checks
 		target_compile_options(${tgt} PRIVATE "$<$<CONFIG:RELEASE>:/GS->")
+
 		# * Enable level 4 warnings
 		target_compile_options(${tgt} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/W4>")
+
 		# * Exceptions
 		target_compile_options(${tgt} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/EHsc>")
+
 		# * RTTI
 		target_compile_options(${tgt} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/GR>")
+
 		# * Don't be permissive
-		if (MSVC_VERSION GREATER 1900)
+		if(MSVC_VERSION GREATER 1900)
 			target_compile_options(${tgt} PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:/permissive->")
 		endif()
 
@@ -81,15 +90,37 @@ function(weaver_configure_target tgt)
 		elseif(WEAVER_VECTORIZE_NEON)
 			target_compile_options(${tgt} PUBLIC "$<$<COMPILE_LANGUAGE:CXX>:/arch:VFPv4>")
 		endif()
+	endif()
 
-	endif(WEAVER_COMPILER_MSVC)
+	# Configure GCC and CLANG
+	if(WEAVER_COMPILER_GNU OR WEAVER_COMPILER_CLANG OR WEAVER_COMPILER_ICC)
+		# Enable all warnings
+		target_compile_options(${tgt} PUBLIC "-Wall")
 
+		if(WEAVER_COMPILER_CLANG)
+			target_compile_options(${tgt} PUBLIC "-Wno-ignored-attributes" "-D__STRICT_ANSI__" "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic")
+		endif()
+
+		# Make AVX available
+		if(WEAVER_VECTORIZE_AVX512)
+			target_compile_options(${tgt} PUBLIC "-mavx512f" "-mavx512vl" "-mavx512dq")
+		elseif(WEAVER_VECTORIZE_AVX2)
+			target_compile_options(${tgt} PUBLIC "-mavx2" "-mfma")
+		elseif(WEAVER_VECTORIZE_AVX)
+			target_compile_options(${tgt} PUBLIC "-mavx")
+		elseif(WEAVER_VECTORIZE_SSE4_2)
+			target_compile_options(${tgt} PUBLIC "-msse4.2")
+		elseif(WEAVER_VECTORIZE_NEON)
+			if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+				target_compile_options(${tgt} PUBLIC "-mfloat-abi=hard" "-mfpu=neon")
+			endif()
+		endif()
+	endif()
 endfunction()
 
 # Add files to target
 # 'files' are supposed to be defined relative to where the target is defined
 function(weaver_target_sources tgt prefix)
-
 	if(NOT "${prefix}" STREQUAL "")
 		string(REPLACE "." "\\." prefix ${prefix})
 	endif()
@@ -97,9 +128,11 @@ function(weaver_target_sources tgt prefix)
 	# Configure the VS project file filters
 	foreach(file ${ARGN})
 		get_filename_component(dir_ "${file}" DIRECTORY)
+
 		if(NOT "${dir_}" STREQUAL "" AND NOT "${prefix}" STREQUAL "")
 			# Remove the prefix and an optional '/'
 			string(REGEX REPLACE "^${prefix}/?" "" dir_ ${dir_})
+
 			# Replace the path separator with filter separators
 			if("${dir_}" STREQUAL "")
 				set(dir_ "\\\\")
@@ -109,6 +142,7 @@ function(weaver_target_sources tgt prefix)
 		else()
 			set(dir_ "\\\\")
 		endif()
+
 		source_group(${dir_} FILES ${file})
 	endforeach()
 

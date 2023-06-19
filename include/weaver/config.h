@@ -143,7 +143,11 @@ extern "C"
 #	elif defined(WEAVER_VECTORIZE_SSE)
 extern "C"
 {
-#		include <intrin.h>
+#		ifdef WEAVER_COMPILER_MSVC
+#			include <intrin.h>
+#		else
+#			include <x86intrin.h>
+#		endif
 }
 #	endif
 
@@ -153,9 +157,33 @@ extern "C"
 
 #if defined WEAVER_COMPILER_MSVC
 
-#	define WEAVER_BEGIN_EXTERNAL_HEADERS
-#	define WEAVER_END_EXTERNAL_HEADERS
-
 #	define WEAVER_STRONG_INLINE __forceinline
 
+#elif defined(WEAVER_COMPILER_GNU) || defined(WEAVER_COMPILER_CLANG)
+
+#	define WEAVER_STRONG_INLINE inline
+
+#endif
+
+#if defined(WEAVER_COMPILER_MSVC)
+#	if defined(WEAVER_CHECK_CORE_GUIDELINES) && (_MSC_VER >= 1910)
+#		include <CppCoreCheck/Warnings.h>
+#		define WEAVER_BEGIN_EXTERNAL_HEADERS \
+			__pragma(warning(push, 1)) \
+			__pragma(warning(disable: ALL_CPPCORECHECK_WARNINGS))
+#	else
+
+#		define WEAVER_BEGIN_EXTERNAL_HEADERS \
+			__pragma(warning(push, 1))
+#	endif
+#	define WEAVER_END_EXTERNAL_HEADERS __pragma(warning(pop))
+#elif defined(WEAVER_COMPILER_CLANG)
+#	define WEAVER_BEGIN_EXTERNAL_HEADERS \
+    _Pragma("clang diagnostic push") \
+    _Pragma("clang diagnostic ignored \"-Weverything\"")
+#	define WEAVER_END_EXTERNAL_HEADERS \
+    _Pragma("clang diagnostic pop")
+#else
+#	define WEAVER_BEGIN_EXTERNAL_HEADERS
+#	define WEAVER_END_EXTERNAL_HEADERS
 #endif

@@ -125,7 +125,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i) noexcept
 		{
-			return _mmWEAVER_extract_ps(vec, i);
+			return extract_f32(vec, i);
 		}
 	};
 	template<>
@@ -149,7 +149,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i) noexcept
 		{
-			return _mmWEAVER_extract_epi32(vec, i);
+			return extract_s32(vec, i);
 		}
 	};
 	template<>
@@ -178,7 +178,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i) noexcept
 		{
-			return _mmWEAVER_extract_epi32(_mm_castps_si128(vec), i) != 0;
+			return extract_s32(_mm_castps_si128(vec), i) != 0;
 		}
 	};
 #endif
@@ -213,7 +213,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i) noexcept
 		{
-			return _mmWEAVER_extract_ps(vec, i);
+			return extract_f32(vec, i);
 		}
 	};
 	template<>
@@ -245,7 +245,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i) noexcept
 		{
-			return _mmWEAVER_extract_epi32(vec, i);
+			return extract_s32(vec, i);
 		}
 	};
 	template<>
@@ -286,7 +286,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i) noexcept
 		{
-			return _mmWEAVER_extract_epi32(_mm256_castps_si256(vec), i) != 0;
+			return extract_s32(_mm256_castps_si256(vec), i) != 0;
 		}
 	};
 #endif
@@ -329,7 +329,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i)
 		{
-			return _mmWEAVER_extract_ps(vec, i);
+			return extract_f32(vec, i);
 		}
 	};
 	template<>
@@ -369,7 +369,7 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE static Scalar get(Type vec, int i)
 		{
-			return _mmWEAVER_extract_epi32(vec, i);
+			return extract_s32(vec, i);
 		}
 	};
 	template<>

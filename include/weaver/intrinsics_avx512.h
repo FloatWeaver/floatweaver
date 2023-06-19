@@ -99,7 +99,7 @@ namespace weaver {
 		return _mm512_reduce_add_ps(_mm512_mul_ps(a, b));
 	}
 
-	WEAVER_STRONG_INLINE float _mmWEAVER_extract_ps(__m512 v, int i)
+	WEAVER_STRONG_INLINE float extract_f32(__m512 v, int i)
 	{
 		typedef union
 		{
@@ -110,7 +110,7 @@ namespace weaver {
 		return F32{ v }.a[i];
 	}
 
-	WEAVER_STRONG_INLINE int _mmWEAVER_extract_epi32(__m512i v, int i)
+	WEAVER_STRONG_INLINE int extract_s32(__m512i v, int i)
 	{
 		typedef union
 		{

@@ -15,8 +15,7 @@ WEAVER_BEGIN_EXTERNAL_HEADERS
 WEAVER_END_EXTERNAL_HEADERS
 
 // FloatWeaver
-#	include <weaver/bool8_avx.h>
-#	include <weaver/float8_avx.h>
+#	include <weaver/vector_types.h>
 
 namespace weaver {
 	__m256 _mm256_sin_ps(__m256 v)

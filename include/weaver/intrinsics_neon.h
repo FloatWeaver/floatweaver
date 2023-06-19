@@ -186,7 +186,7 @@ namespace weaver {
 		return _mm_cvtss_f32(accum);
 	}
 
-	WEAVER_STRONG_INLINE float _mmWEAVER_extract_ps(__m128 v, int i)
+	WEAVER_STRONG_INLINE float extract_f32(__m128 v, int i)
 	{
 		typedef union
 		{
@@ -197,7 +197,7 @@ namespace weaver {
 		return F32 {v}.a[i];
 	}
 
-	WEAVER_STRONG_INLINE int _mmWEAVER_extract_epi32(__m128i v, int i)
+	WEAVER_STRONG_INLINE int extract_s32(__m128i v, int i)
 	{
 		typedef union
 		{

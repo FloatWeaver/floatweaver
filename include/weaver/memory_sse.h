@@ -17,10 +17,10 @@ namespace weaver {
 #if !defined WEAVER_VECTORIZE_AVX2
 	WEAVER_STRONG_INLINE __m128 gather(float const* base, __m128i vindex) noexcept
 	{
-		const __m128 first = _mm_set_ss(base[_mmWEAVER_extract_epi32(vindex, 0)]);
-		const __m128 second = _mmWEAVER_insert_ps(first, _mm_set_ss(base[_mmWEAVER_extract_epi32(vindex, 1)]), 0x10);
-		const __m128 third = _mmWEAVER_insert_ps(second, _mm_set_ss(base[_mmWEAVER_extract_epi32(vindex, 2)]), 0x20);
-		const __m128 fourth = _mmWEAVER_insert_ps(third, _mm_set_ss(base[_mmWEAVER_extract_epi32(vindex, 3)]), 0x30);
+		const __m128 first = _mm_set_ss(base[extract_s32(vindex, 0)]);
+		const __m128 second = _mmWEAVER_insert_ps(first, _mm_set_ss(base[extract_s32(vindex, 1)]), 0x10);
+		const __m128 third = _mmWEAVER_insert_ps(second, _mm_set_ss(base[extract_s32(vindex, 2)]), 0x20);
+		const __m128 fourth = _mmWEAVER_insert_ps(third, _mm_set_ss(base[extract_s32(vindex, 3)]), 0x30);
 
 		return fourth;
 	}
