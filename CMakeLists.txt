@@ -117,4 +117,8 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		CXX_EXTENSIONS NO
 	)
 	target_link_libraries(weaver_tests weaver Catch2::Catch2WithMain)
+
+	include(CTest)
+	include(Catch)
+	catch_discover_tests(weaver_tests)
 endif()
