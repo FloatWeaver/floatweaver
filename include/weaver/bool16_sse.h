@@ -20,7 +20,6 @@ namespace weaver {
 			set(_mm_castsi128_ps(I4_0), _mm_castsi128_ps(I4_1), _mm_castsi128_ps(I4_2), _mm_castsi128_ps(I4_3));
 		}
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, _mm_and_ps, 4)
 		WEAVER_SIMD_BINARY_OP(operator||, _mm_or_ps, 4)
 

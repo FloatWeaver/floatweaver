@@ -17,19 +17,16 @@ namespace weaver {
 	public:
 		WEAVER_SIMD_VECTORSCALAR_SETUP(NEON)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator+, vaddq_f32, 2)
 		WEAVER_SIMD_BINARY_OP(operator-, vsubq_f32, 2)
 		WEAVER_SIMD_BINARY_OP(operator*, vmulq_f32, 2)
 		WEAVER_SIMD_BINARY_OP(operator/, vdivq_f32, 2)
 
-	public:
 		WEAVER_SIMD_ASSIGN_OP(operator+=, vaddq_f32, 2)
 		WEAVER_SIMD_ASSIGN_OP(operator-=, vsubq_f32, 2)
 		WEAVER_SIMD_ASSIGN_OP(operator*=, vmulq_f32, 2)
 		WEAVER_SIMD_ASSIGN_OP(operator/=, vdivq_f32, 2)
 
-	public:
 		WEAVER_SIMD_COMP_OP(operator==, vceqq_f32, 2)
 		WEAVER_SIMD_COMP_OP(operator!=, vcneqq_f32, 2)
 		WEAVER_SIMD_COMP_OP(operator<, vcltq_f32, 2)
@@ -37,7 +34,6 @@ namespace weaver {
 		WEAVER_SIMD_COMP_OP(operator>, vcgtq_f32, 2)
 		WEAVER_SIMD_COMP_OP(operator>=, vcgeq_f32, 2)
 
-	public:
 		WEAVER_SIMD_UNARY_OP(abs, vabsq_f32, 2)
 		WEAVER_SIMD_UNARY_OP(sin, vsinq_f32, 2)
 		WEAVER_SIMD_UNARY_OP(cos, vcosq_f32, 2)
@@ -52,7 +48,6 @@ namespace weaver {
 
 		WEAVER_SIMD_QUERY_OP(isinf, visinfq_f32, 2)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(min, vminq_f32, 2)
 		WEAVER_SIMD_BINARY_OP(max, vmaxq_f32, 2)
 
@@ -69,16 +64,4 @@ namespace weaver {
 			vbslq_f32(mask.get(0), a.get(0), b.get(0)),
 			vbslq_f32(mask.get(1), a.get(1), b.get(1)));
 	}
-
-	//WEAVER_STRONG_INLINE std::ostream& operator<<(std::ostream& s, const VectorScalar<float, 8>& rhs)
-	//{
-	//	alignas(8) float vars[8];
-	//	vst1q_f32(vars + 0, rhs.get(0));
-	//	vst1q_f32(vars + 4, rhs.get(1));
-	//
-	//	s << "'" << vars[0] << "," << vars[1] << "," << vars[2] << "," << vars[3]
-	//	  << vars[4] << "," << vars[5] << "," << vars[6] << "," << vars[7] << "'";
-	//
-	//	return s;
-	//}
 }

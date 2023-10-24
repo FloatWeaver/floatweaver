@@ -20,7 +20,6 @@ namespace weaver {
 		WEAVER_SIMD_VECTORSCALAR_SETUP(None)
 		WEAVER_STRONG_INLINE Scalar& operator[](int idx) noexcept { return _data[idx]; }
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, details::conj, 4)
 		WEAVER_SIMD_BINARY_OP(operator||, details::disj, 4)
 

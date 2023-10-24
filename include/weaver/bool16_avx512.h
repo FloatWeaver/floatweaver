@@ -16,7 +16,6 @@ namespace weaver {
 	public:
 		WEAVER_SIMD_VECTORSCALAR_SETUP(AVX512)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, _mm512_kand, 1)
 		WEAVER_SIMD_BINARY_OP(operator||, _mm512_kor, 1)
 

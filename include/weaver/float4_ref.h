@@ -26,19 +26,16 @@ namespace weaver {
 		}
 		WEAVER_STRONG_INLINE Scalar& operator[](int idx) { return _data[idx]; }
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator+, details::add, 4)
 		WEAVER_SIMD_BINARY_OP(operator-, details::sub, 4)
 		WEAVER_SIMD_BINARY_OP(operator*, details::mul, 4)
 		WEAVER_SIMD_BINARY_OP(operator/, details::div, 4)
 
-	public:
 		WEAVER_SIMD_ASSIGN_OP(operator+=, details::add, 4)
 		WEAVER_SIMD_ASSIGN_OP(operator-=, details::sub, 4)
 		WEAVER_SIMD_ASSIGN_OP(operator*=, details::mul, 4)
 		WEAVER_SIMD_ASSIGN_OP(operator/=, details::div, 4)
 
-	public:
 		WEAVER_SIMD_COMP_OP(operator==, details::cmpeq, 4)
 		WEAVER_SIMD_COMP_OP(operator!=, details::cmpne, 4)
 		WEAVER_SIMD_COMP_OP(operator<, details::cmplt, 4)
@@ -46,7 +43,6 @@ namespace weaver {
 		WEAVER_SIMD_COMP_OP(operator>, details::cmpgt, 4)
 		WEAVER_SIMD_COMP_OP(operator>=, details::cmpge, 4)
 
-	public:
 		WEAVER_SIMD_UNARY_OP(abs, std::abs, 4)
 		WEAVER_SIMD_UNARY_OP(sgn, details::sgn, 4)
 
@@ -62,7 +58,6 @@ namespace weaver {
 
 		WEAVER_SIMD_QUERY_OP(isinf, std::isinf, 4)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(min, std::min, 4)
 		WEAVER_SIMD_BINARY_OP(max, std::max, 4)
 

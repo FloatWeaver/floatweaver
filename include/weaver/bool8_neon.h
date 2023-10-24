@@ -16,7 +16,6 @@ namespace weaver {
 	public:
 		WEAVER_SIMD_VECTORSCALAR_SETUP(NEON)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, vandq_u32, 2)
 		WEAVER_SIMD_BINARY_OP(operator||, vorrq_u32, 2)
 

@@ -18,7 +18,6 @@ namespace weaver
 		WEAVER_SIMD_VECTORSCALAR_SETUP(SSE)
 		explicit WEAVER_STRONG_INLINE VectorScalar(__m128i I4) noexcept { set(_mm_castsi128_ps(I4)); }
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, _mm_and_ps, 1)
 		WEAVER_SIMD_BINARY_OP(operator||, _mm_or_ps, 1)
 

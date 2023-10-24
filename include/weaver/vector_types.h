@@ -9,6 +9,9 @@
 // C++ standard library
 #include <utility>
 
+// Eigen
+#include <Eigen/Core>
+
 // FloatWeaver
 #include <weaver/config.h>
 
@@ -166,5 +169,37 @@ namespace weaver
 		const VectorScalar<float, Width>& tol = 0)
 	{
 		return abs(x - y) <= tol * max(VectorScalar<float, Width>(1), max(abs(x), abs(y)));
+	}
+
+	template<typename Scalar, int Width, int Rows, int Cols>
+	WEAVER_STRONG_INLINE Eigen::Matrix<VectorScalar<Scalar, Width>, Rows, Cols> select(
+		const VectorScalar<bool, Width>& mask,
+		const Eigen::Matrix<VectorScalar<Scalar, Width>, Rows, Cols>& a,
+		const Eigen::Matrix<VectorScalar<Scalar, Width>, Rows, Cols>& b)
+	{
+		Eigen::Matrix<VectorScalar<Scalar, Width>, Rows, Cols> selected;
+		for (int c = 0; c < Cols; c++)
+		{
+			for (int r = 0; r < Rows; r++)
+			{
+				selected(r, c) = select(mask, a(r, c), b(r, c));
+			}
+		}
+
+		return selected;
+	}
+
+	template<typename Scalar, int Width, size_t N>
+	WEAVER_STRONG_INLINE std::array<VectorScalar<Scalar, Width>, N> select(
+		const VectorScalar<bool, Width>& mask,
+		const std::array<VectorScalar<Scalar, Width>, N>& a,
+		const std::array<VectorScalar<Scalar, Width>, N>& b)
+	{
+		std::array<VectorScalar<Scalar, Width>, N> selected;
+
+		for (size_t i = 0; i < N; i++)
+			selected[i] = select(mask, a[i], b[i]);
+
+		return selected;
 	}
 }

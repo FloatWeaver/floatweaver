@@ -17,7 +17,6 @@ namespace weaver {
 		WEAVER_SIMD_VECTORSCALAR_SETUP(AVX)
 		explicit WEAVER_STRONG_INLINE VectorScalar(__m256i I8) noexcept { set(_mm256_castsi256_ps(I8)); }
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, _mm256_and_ps, 1)
 		WEAVER_SIMD_BINARY_OP(operator||, _mm256_or_ps, 1)
 

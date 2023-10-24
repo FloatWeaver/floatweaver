@@ -19,7 +19,6 @@ set(INC
 	include/weaver/config.h
 	include/weaver/common.h
 	include/weaver/conditional.h
-	include/weaver/vectorscalar.h
 	include/weaver/vector_types.h
 
 	include/weaver/eigen.h

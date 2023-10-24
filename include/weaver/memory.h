@@ -73,39 +73,6 @@ namespace weaver {
 		return res;
 	}
 
-	//template<typename Scalar, int Width, int Rows, int Cols, int Stride>
-	//Eigen::Matrix<VectorScalar<Scalar, Width>, Rows, Cols> gather(
-	//	const Vcl::Core::InterleavedArray<Scalar, Rows, Cols, Stride>& base,
-	//	VectorScalar<int, Width>& vindex)
-	//{
-	//	static_assert(Rows != Vcl::Core::DynamicStride && Cols != Vcl::Core::DynamicStride, "Only fixed size matrices are supported.");
-	//
-	//	Eigen::Matrix<VectorScalar<Scalar, Width>, Rows, Cols> res;
-	//	for (int c = 0; c < Cols; c++)
-	//	{
-	//		for (int r = 0; r < Rows; r++)
-	//		{
-	//			VectorScalar<Scalar, Width> tmp;
-	//			for (int i = 0; i < Width; i++)
-	//			{
-	//				tmp[i] = base.template at<Scalar>(vindex[i] * 1)(r, c);
-	//			}
-	//
-	//			res(r, c) = tmp;
-	//		}
-	//	}
-	//
-	//	return res;
-	//}
-	//
-	//template<typename Scalar, int Rows, int Cols, int Stride>
-	//Eigen::Matrix<Scalar, Rows, Cols> gather(const Vcl::Core::InterleavedArray<Scalar, Rows, Cols, Stride>& base, int vindex)
-	//{
-	//	static_assert(Rows != Vcl::Core::DynamicStride && Cols != Vcl::Core::DynamicStride, "Only fixed size matrices are supported.");
-	//
-	//	return base.template at<Scalar>(vindex * 1);
-	//}
-
 	template<typename Scalar>
 	void scatter(Scalar value, Scalar* base, int vindex) noexcept
 	{
@@ -147,14 +114,6 @@ namespace weaver {
 			}
 		}
 	}
-
-	//template<typename Scalar, int Rows, int Cols, int Stride>
-	//void scatter(const Eigen::Matrix<Scalar, Rows, Cols>& value, Vcl::Core::InterleavedArray<Scalar, Rows, Cols, Stride>& base, int vindex)
-	//{
-	//	static_assert(Rows != Vcl::Core::DynamicStride && Cols != Vcl::Core::DynamicStride, "Only fixed size matrices are supported.");
-	//
-	//	base.template at<Scalar>(vindex * 1) = value;
-	//}
 
 #if !defined(WEAVER_VECTORIZE_SSE) && !defined(WEAVER_VECTORIZE_AVX) && !defined(WEAVER_VECTORIZE_NEON)
 	template<typename T, int Width>

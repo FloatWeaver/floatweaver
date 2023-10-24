@@ -21,7 +21,6 @@ namespace weaver {
 			_data[1] = _mm256_castsi256_ps(I8_1);
 		}
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator&&, _mm256_and_ps, 2)
 		WEAVER_SIMD_BINARY_OP(operator||, _mm256_or_ps, 2)
 

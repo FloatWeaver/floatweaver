@@ -18,19 +18,16 @@ namespace weaver {
 	public:
 		WEAVER_SIMD_VECTORSCALAR_SETUP(AVX)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(operator+, _mm256_add_ps, 2)
 		WEAVER_SIMD_BINARY_OP(operator-, _mm256_sub_ps, 2)
 		WEAVER_SIMD_BINARY_OP(operator*, _mm256_mul_ps, 2)
 		WEAVER_SIMD_BINARY_OP(operator/, _mm256_div_ps, 2)
 
-	public:
 		WEAVER_SIMD_ASSIGN_OP(operator+=, _mm256_add_ps, 2)
 		WEAVER_SIMD_ASSIGN_OP(operator-=, _mm256_sub_ps, 2)
 		WEAVER_SIMD_ASSIGN_OP(operator*=, _mm256_mul_ps, 2)
 		WEAVER_SIMD_ASSIGN_OP(operator/=, _mm256_div_ps, 2)
 
-	public:
 		WEAVER_SIMD_COMP_OP(operator==, _mm256_cmpeq_ps, 2)
 		WEAVER_SIMD_COMP_OP(operator!=, _mm256_cmpneq_ps, 2)
 		WEAVER_SIMD_COMP_OP(operator<, _mm256_cmplt_ps, 2)
@@ -38,7 +35,6 @@ namespace weaver {
 		WEAVER_SIMD_COMP_OP(operator>, _mm256_cmpgt_ps, 2)
 		WEAVER_SIMD_COMP_OP(operator>=, _mm256_cmpge_ps, 2)
 
-	public:
 		WEAVER_SIMD_UNARY_OP(abs, _mm256_abs_ps, 2)
 		WEAVER_SIMD_UNARY_OP(sgn, _mm256_sgn_ps, 2)
 
@@ -54,7 +50,6 @@ namespace weaver {
 
 		WEAVER_SIMD_QUERY_OP(isinf, _mm256_isinf_ps, 2)
 
-	public:
 		WEAVER_SIMD_BINARY_OP(min, _mm256_min_ps, 2)
 		WEAVER_SIMD_BINARY_OP(max, _mm256_max_ps, 2)
 
@@ -71,18 +66,4 @@ namespace weaver {
 			_mm256_blendv_ps(b.get(0), a.get(0), mask.get(0)),
 			_mm256_blendv_ps(b.get(1), a.get(1), mask.get(1)));
 	}
-
-	//WEAVER_STRONG_INLINE std::ostream& operator<<(std::ostream& s, const VectorScalar<float, 16>& rhs)
-	//{
-	//	alignas(32) float vars[16];
-	//	_mm256_store_ps(vars + 0, rhs.get(0));
-	//	_mm256_store_ps(vars + 8, rhs.get(1));
-	//
-	//	s << "'" << vars[0] << ", " << vars[1] << ", " << vars[2] << ", " << vars[3] << ", "
-	//	  << vars[4] << ", " << vars[5] << ", " << vars[6] << ", " << vars[7] << ", "
-	//	  << vars[8] << ", " << vars[9] << ", " << vars[10] << ", " << vars[11] << ", "
-	//	  << vars[12] << ", " << vars[13] << ", " << vars[14] << ", " << vars[15] << "'";
-	//
-	//	return s;
-	//}
 }
