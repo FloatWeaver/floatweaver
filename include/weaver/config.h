@@ -86,13 +86,13 @@
 #		define WEAVER_ARCH_ARM64
 #	endif
 
-#	if defined EMSCRIPTEN
+#	if defined __EMSCRIPTEN__
 #		define WEAVER_ARCH_WEBASM
 #	endif
 
 #endif
 
-#if (defined(WEAVER_ARCH_X86) || defined(WEAVER_ARCH_X64) || defined(WEAVER_ARCH_WEBASM))
+#if (defined(WEAVER_ARCH_X86) || defined(WEAVER_ARCH_X64))
 
 #	ifdef WEAVER_VECTORIZE_AVX512
 #		ifndef WEAVER_VECTORIZE_AVX2
@@ -153,6 +153,33 @@ extern "C"
 
 #elif (defined(WEAVER_ARCH_ARM) || defined(WEAVER_ARCH_ARM64)) && defined WEAVER_VECTORIZE_NEON
 #	include <arm_neon.h>
+#elif (defined(WEAVER_ARCH_WEBASM))
+#	ifdef WEAVER_VECTORIZE_SSE4_2
+#		ifndef WEAVER_VECTORIZE_SSE4_1
+#			define WEAVER_VECTORIZE_SSE4_1
+#		endif
+#	endif
+#	ifdef WEAVER_VECTORIZE_SSE4_1
+#		ifndef WEAVER_VECTORIZE_SSSE3
+#			define WEAVER_VECTORIZE_SSSE3
+#		endif
+#	endif
+#	ifdef WEAVER_VECTORIZE_SSSE3
+#		ifndef WEAVER_VECTORIZE_SSE3
+#			define WEAVER_VECTORIZE_SSE3
+#		endif
+#	endif
+#	ifdef WEAVER_VECTORIZE_SSE3
+#		ifndef WEAVER_VECTORIZE_SSE2
+#			define WEAVER_VECTORIZE_SSE2
+#		endif
+#	endif
+#	ifdef WEAVER_VECTORIZE_SSE2
+#		ifndef WEAVER_VECTORIZE_SSE
+#			define WEAVER_VECTORIZE_SSE
+#		endif
+#	endif
+#   include <nmmintrin.h>
 #endif
 
 #if defined WEAVER_COMPILER_MSVC

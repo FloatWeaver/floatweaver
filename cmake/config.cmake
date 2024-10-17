@@ -101,7 +101,7 @@ function(weaver_configure_target tgt)
 			target_compile_options(${tgt} PUBLIC "-Wno-ignored-attributes" "-D__STRICT_ANSI__" "-Wno-c++98-compat" "-Wno-c++98-compat-pedantic")
 		endif()
 
-		# Make AVX available
+		# Make SIMD available
 		if(WEAVER_VECTORIZE_AVX512)
 			target_compile_options(${tgt} PUBLIC "-mavx512f" "-mavx512vl" "-mavx512dq")
 		elseif(WEAVER_VECTORIZE_AVX2)
@@ -113,6 +113,14 @@ function(weaver_configure_target tgt)
 		elseif(WEAVER_VECTORIZE_NEON)
 			if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 				target_compile_options(${tgt} PUBLIC "-mfloat-abi=hard" "-mfpu=neon")
+			endif()
+		endif()
+
+		if(EMSCRIPTEN)
+			target_compile_definitions(${tgt} PUBLIC EIGEN_DONT_VECTORIZE)
+
+			if(WEAVER_VECTORIZE_SSE4_2 OR WEAVER_VECTORIZE_AVX)
+				target_compile_options(${tgt} PUBLIC "-msimd128")
 			endif()
 		endif()
 	endif()
