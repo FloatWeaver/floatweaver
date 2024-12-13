@@ -3,8 +3,6 @@ cmake_policy(SET CMP0048 NEW)
 
 project(FloatWeaver VERSION 0.1.0.0 LANGUAGES CXX)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/external/eigen/cmake")
-set(EIGEN3_INCLUDE_DIR "${CMAKE_CURRENT_LIST_DIR}/external/eigen")
 find_package(Eigen3 REQUIRED)
 
 include(cmake/config.cmake)
@@ -90,7 +88,7 @@ weaver_target_sources(weaver "." ${SRC})
 
 # Only build tests when building as standalone project
 if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
-	add_subdirectory(external/catch2 EXCLUDE_FROM_ALL)
+	find_package(Catch2 REQUIRED)
 
 	add_executable(weaver_tests "")
 	set(WEAVER_TEST_SRC
@@ -118,7 +116,9 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 	)
 	target_link_libraries(weaver_tests weaver Catch2::Catch2WithMain)
 
-	include(CTest)
-	include(Catch)
-	catch_discover_tests(weaver_tests)
+	if(NOT CMAKE_CROSSCOMPILING)
+		include(CTest)
+		include(Catch)
+		catch_discover_tests(weaver_tests)
+	endif()
 endif()
