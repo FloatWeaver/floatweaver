@@ -62,10 +62,26 @@ jobs:
             echo "host-profile=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
       - name: Install Conan2
         run: pip install conan
 
+      - name: Cache Conan dependencies
+        id: conan-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2
+          key: conan2-${{ runner.os }}-${{ matrix.c_compiler }}-${{ hashFiles('**/conanfile.*') }}
+          restore-keys: conan2-${{ runner.os }}-${{ matrix.c_compiler }}-
+
       - name: Detect default Conan profile
+        if: steps.conan-cache.outputs.cache-hit != 'true'
         run: |
           echo Using C compiler: $CC
           echo Using C++ compiler: $CXX
