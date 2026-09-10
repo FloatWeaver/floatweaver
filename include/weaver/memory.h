@@ -124,6 +124,15 @@ namespace weaver {
 
 	template<typename T, int Width>
 	WEAVER_STRONG_INLINE void load(
+		Eigen::Matrix<VectorScalar<T, Width>, 2, 1>& loaded,
+		const Eigen::Matrix<T, 2, 1>* base)
+	{
+		loaded(0) = VectorScalar<T, Width>(base->data() + 0, 2);
+		loaded(1) = VectorScalar<T, Width>(base->data() + 1, 2);
+	}
+
+	template<typename T, int Width>
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<VectorScalar<T, Width>, 3, 1>& loaded,
 		const Eigen::Matrix<T, 3, 1>* base)
 	{
