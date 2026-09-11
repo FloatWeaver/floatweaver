@@ -15,8 +15,7 @@ WEAVER_BEGIN_EXTERNAL_HEADERS
 WEAVER_END_EXTERNAL_HEADERS
 
 // FloatWeaver
-#	include <weaver/bool16_avx512.h>
-#	include <weaver/float16_avx512.h>
+#	include <weaver/vector_types.h>
 
 namespace weaver {
 #	if !defined(WEAVER_COMPILER_MSVC)
