@@ -17,6 +17,12 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
         c_compiler: [gcc-12, clang-15, cl, emcc]
+        # One leg per WEAVER_VECTORIZE backend, so every op-codegen change is
+        # actually compiled (and, where the runner's CPU allows it, run)
+        # against all of ref/SSE/AVX/AVX2/AVX512 rather than just the SSE 4.2
+        # default. NEON is not covered here: none of the hosted runners below
+        # are ARM.
+        vectorize: ['Generic', 'SSE 4.2', 'AVX', 'AVX 2', 'AVX 512']
         include:
           - os: windows-latest
             c_compiler: cl
@@ -35,6 +41,14 @@ jobs:
             c_compiler: emcc
           - os: ubuntu-latest
             c_compiler: cl
+          # Emscripten's headers only emulate up to SSE 4.2 over wasm32 SIMD128;
+          # there is no __m256/__m512 support to target AVX/AVX2/AVX512 with.
+          - c_compiler: emcc
+            vectorize: 'AVX'
+          - c_compiler: emcc
+            vectorize: 'AVX 2'
+          - c_compiler: emcc
+            vectorize: 'AVX 512'
 
     steps:
       - uses: actions/checkout@v3
@@ -99,17 +113,46 @@ jobs:
           -B ${{ steps.strings.outputs.build-output-dir }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE=${{ steps.strings.outputs.generators-dir }}/conan_toolchain.cmake
+          -DWEAVER_VECTORIZE="${{ matrix.vectorize }}"
 
       - name: Build
         # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-      - name: Test
-        if: "${{ matrix.c_compiler != 'emcc' }}"
+      - name: Test (Linux)
+        if: "${{ runner.os == 'Linux' && matrix.c_compiler != 'emcc' }}"
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-        run: ctest --build-config ${{ matrix.build_type }}
+        #
+        # AVX-512 is special-cased: GitHub-hosted runners don't guarantee AVX-512
+        # CPU support even though the build above always compiles it (that's what
+        # catches cross-backend interface bugs). If this runner's CPU lacks it,
+        # skip running rather than fail the job on an unrelated SIGILL.
+        run: |
+          if [ "${{ matrix.vectorize }}" = "AVX 512" ]; then
+            if ! grep -qE '\bavx512f\b' /proc/cpuinfo || ! grep -qE '\bavx512vl\b' /proc/cpuinfo || ! grep -qE '\bavx512dq\b' /proc/cpuinfo; then
+              echo "::warning::Skipping AVX-512 tests: this runner's CPU does not support avx512f/avx512vl/avx512dq."
+              exit 0
+            fi
+          fi
+          ctest --build-config ${{ matrix.build_type }}
+
+      - name: Test (Windows)
+        if: "${{ runner.os == 'Windows' }}"
+        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        shell: pwsh
+        # Same AVX-512 caveat as the Linux step above, checked via the .NET
+        # intrinsics support flag instead of /proc/cpuinfo.
+        run: |
+          if ("${{ matrix.vectorize }}" -eq "AVX 512") {
+            if (-not [System.Runtime.Intrinsics.X86.Avx512F]::IsSupported) {
+              Write-Host "::warning::Skipping AVX-512 tests: this runner's CPU does not support AVX-512."
+              exit 0
+            }
+          }
+          ctest --build-config ${{ matrix.build_type }}
+          exit $LASTEXITCODE
 
       - name: Test (Emscripten)
         if: "${{ matrix.c_compiler == 'emcc' }}"
