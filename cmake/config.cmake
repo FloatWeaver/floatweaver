@@ -103,7 +103,10 @@ function(weaver_configure_target tgt)
 
 		# Make SIMD available
 		if(WEAVER_VECTORIZE_AVX512)
-			target_compile_options(${tgt} PUBLIC "-mavx512f" "-mavx512vl" "-mavx512dq")
+			# Every real AVX512F CPU also has AVX2/FMA3; Eigen's
+			# ConfigureVectorization.h refuses to compile AVX-512 code without
+			# -mfma since GCC/Clang can otherwise miscompile it.
+			target_compile_options(${tgt} PUBLIC "-mavx512f" "-mavx512vl" "-mavx512dq" "-mavx2" "-mfma")
 		elseif(WEAVER_VECTORIZE_AVX2)
 			target_compile_options(${tgt} PUBLIC "-mavx2" "-mfma")
 		elseif(WEAVER_VECTORIZE_AVX)
