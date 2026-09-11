@@ -20,12 +20,12 @@ namespace weaver {
 		WEAVER_SIMD_BINARY_OP(operator+, vaddq_f32, 1)
 		WEAVER_SIMD_BINARY_OP(operator-, vsubq_f32, 1)
 		WEAVER_SIMD_BINARY_OP(operator*, vmulq_f32, 1)
-		WEAVER_SIMD_BINARY_OP(operator/, vdivq_f32, 1)
+		WEAVER_SIMD_BINARY_OP(operator/, weaver_vdivq_f32, 1)
 
 		WEAVER_SIMD_ASSIGN_OP(operator+=, vaddq_f32, 1)
 		WEAVER_SIMD_ASSIGN_OP(operator-=, vsubq_f32, 1)
 		WEAVER_SIMD_ASSIGN_OP(operator*=, vmulq_f32, 1)
-		WEAVER_SIMD_ASSIGN_OP(operator/=, vdivq_f32, 1)
+		WEAVER_SIMD_ASSIGN_OP(operator/=, weaver_vdivq_f32, 1)
 
 		WEAVER_SIMD_COMP_OP(operator==, vceqq_f32, 1)
 		WEAVER_SIMD_COMP_OP(operator!=, vcneqq_f32, 1)
@@ -40,7 +40,7 @@ namespace weaver {
 		WEAVER_SIMD_UNARY_OP(exp, vexpq_f32, 1)
 		WEAVER_SIMD_UNARY_OP(log, vlogq_f32, 1)
 		WEAVER_SIMD_UNARY_OP(sgn, vsgnq_f32, 1)
-		WEAVER_SIMD_UNARY_OP(sqrt, vsqrtq_f32, 1)
+		WEAVER_SIMD_UNARY_OP(sqrt, weaver_vsqrtq_f32, 1)
 		WEAVER_SIMD_UNARY_OP(rcp, vrcpq_f32, 1)
 		WEAVER_SIMD_UNARY_OP(rsqrt, vrsqrtq_f32, 1)
 
