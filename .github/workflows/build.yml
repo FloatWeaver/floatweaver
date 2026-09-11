@@ -16,7 +16,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
-        c_compiler: [gcc-12, clang-15, cl, emcc]
+        c_compiler: [gcc-12, clang-18, cl, emcc]
         # One leg per WEAVER_VECTORIZE backend, so every op-codegen change is
         # actually compiled (and, where the runner's CPU allows it, run)
         # against all of ref/SSE/AVX/AVX2/AVX512 rather than just the SSE 4.2
@@ -30,13 +30,13 @@ jobs:
             c_compiler: gcc-12
             cxx_compiler: g++-12
           - os: ubuntu-latest
-            c_compiler: clang-15
-            cxx_compiler: clang++-15
+            c_compiler: clang-18
+            cxx_compiler: clang++-18
         exclude:
           - os: windows-latest
             c_compiler: gcc-12
           - os: windows-latest
-            c_compiler: clang-15
+            c_compiler: clang-18
           - os: windows-latest
             c_compiler: emcc
           - os: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Setup build toolchain configuration
-        if: "${{ matrix.c_compiler == 'gcc-12' || matrix.c_compiler == 'clang-15' }}"
+        if: "${{ matrix.c_compiler == 'gcc-12' || matrix.c_compiler == 'clang-18' }}"
         run: |
           echo "CC=${{ matrix.c_compiler }}" >> $GITHUB_ENV
           echo "CXX=${{ matrix.cxx_compiler }}" >> $GITHUB_ENV
