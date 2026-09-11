@@ -160,3 +160,83 @@ jobs:
         # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: node weaver_tests.js
+
+  # No GitHub-hosted runner is ARM, so the NEON backend is cross-compiled here
+  # on an x86 runner and its tests are run through QEMU user-mode emulation
+  # instead. CMAKE_CROSSCOMPILING_EMULATOR (set explicitly below, since Conan
+  # doesn't know about QEMU) makes both `cmake --build` and `ctest` transparently
+  # exec test binaries as e.g. `qemu-arm -L /usr/arm-linux-gnueabihf <binary>`.
+  build-arm:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - arch: arm
+            triple: arm-linux-gnueabihf
+            qemu: qemu-arm
+            profile: cmake-conan/arm_profile
+          - arch: aarch64
+            triple: aarch64-linux-gnu
+            qemu: qemu-aarch64
+            profile: cmake-conan/aarch64_profile
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install cross-compilation toolchain and QEMU
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user "gcc-12-${{ matrix.triple }}" "g++-12-${{ matrix.triple }}"
+
+      - name: Set reusable strings
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+          echo "generators-dir=${{ github.workspace }}/build/build/Release/generators" >> "$GITHUB_OUTPUT"
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install Conan2
+        run: pip install conan
+
+      - name: Cache Conan dependencies
+        id: conan-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2
+          key: conan2-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('**/conanfile.*') }}
+          restore-keys: conan2-${{ runner.os }}-${{ matrix.arch }}-
+
+      - name: Detect default Conan profile
+        if: steps.conan-cache.outputs.cache-hit != 'true'
+        run: conan profile detect
+
+      - name: Install Conan Dependencies
+        run: >
+          conan install --build=missing -pr:h ${{ matrix.profile }} -of ${{ steps.strings.outputs.build-output-dir }} ${{ github.workspace }}
+
+      - name: Configure CMake
+        run: >
+          cmake -S ${{ github.workspace }}
+          -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE=${{ steps.strings.outputs.generators-dir }}/conan_toolchain.cmake
+          -DWEAVER_VECTORIZE=NEON
+          -DCMAKE_CROSSCOMPILING_EMULATOR="${{ matrix.qemu }};-L;/usr/${{ matrix.triple }}"
+
+      - name: Build
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release
+
+      - name: Test (QEMU)
+        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        # Runs transparently under QEMU via CMAKE_CROSSCOMPILING_EMULATOR above.
+        run: ctest --build-config Release --output-on-failure

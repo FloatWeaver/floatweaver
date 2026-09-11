@@ -149,7 +149,13 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 	)
 	target_link_libraries(weaver_tests weaver Catch2::Catch2WithMain)
 
-	if(NOT CMAKE_CROSSCOMPILING)
+	# catch_discover_tests() needs to run the freshly-built test executable to
+	# enumerate its test cases. When cross-compiling that only works if CMake
+	# knows how to execute foreign-architecture binaries, i.e. when
+	# CMAKE_CROSSCOMPILING_EMULATOR is set (e.g. "qemu-arm -L ..." for a NEON
+	# build cross-compiled for ARM/AArch64). Plain Emscripten builds don't set
+	# it -- CI drives those through `node weaver_tests.js` directly instead.
+	if(NOT CMAKE_CROSSCOMPILING OR (CMAKE_CROSSCOMPILING_EMULATOR AND NOT EMSCRIPTEN))
 		include(CTest)
 		include(Catch)
 		catch_discover_tests(weaver_tests)
