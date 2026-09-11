@@ -14,17 +14,22 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # ubuntu-22.04-arm / windows-11-arm are native GitHub-hosted arm64
+        # runners (Linux/windows still report as runner.os Linux/Windows, so
+        # none of the steps below need to branch on architecture).
+        os: [ubuntu-latest, windows-latest, ubuntu-22.04-arm, windows-11-arm]
         build_type: [Release]
         c_compiler: [gcc-12, clang-18, cl, emcc]
         # One leg per WEAVER_VECTORIZE backend, so every op-codegen change is
         # actually compiled (and, where the runner's CPU allows it, run)
-        # against all of ref/SSE/AVX/AVX2/AVX512 rather than just the SSE 4.2
-        # default. NEON is not covered here: none of the hosted runners below
-        # are ARM.
-        vectorize: ['Generic', 'SSE 4.2', 'AVX', 'AVX 2', 'AVX 512']
+        # against all of ref/SSE/AVX/AVX2/AVX512/NEON: x86 hosts cover
+        # ref/SSE/AVX/AVX2/AVX512, arm64 hosts cover ref/NEON (see the
+        # vectorize/os excludes below).
+        vectorize: ['Generic', 'SSE 4.2', 'AVX', 'AVX 2', 'AVX 512', 'NEON']
         include:
           - os: windows-latest
+            c_compiler: cl
+          - os: windows-11-arm
             c_compiler: cl
           - os: ubuntu-latest
             c_compiler: gcc-12
@@ -32,15 +37,56 @@ jobs:
           - os: ubuntu-latest
             c_compiler: clang-18
             cxx_compiler: clang++-18
+          - os: ubuntu-22.04-arm
+            c_compiler: gcc-12
+            cxx_compiler: g++-12
+          - os: ubuntu-22.04-arm
+            c_compiler: clang-18
+            cxx_compiler: clang++-18
         exclude:
+          # Compiler/os pairing: cl only on Windows, gcc-12/clang-18 only on
+          # Linux, and emcc (portable wasm32 output, no ISA dependence) only
+          # on the x64 Linux runner rather than duplicated onto arm64 too.
           - os: windows-latest
             c_compiler: gcc-12
           - os: windows-latest
             c_compiler: clang-18
           - os: windows-latest
             c_compiler: emcc
+          - os: windows-11-arm
+            c_compiler: gcc-12
+          - os: windows-11-arm
+            c_compiler: clang-18
+          - os: windows-11-arm
+            c_compiler: emcc
           - os: ubuntu-latest
             c_compiler: cl
+          - os: ubuntu-22.04-arm
+            c_compiler: cl
+          - os: ubuntu-22.04-arm
+            c_compiler: emcc
+          # Vectorize/os pairing: x86 backends only make sense on x86 hosts,
+          # NEON only on arm64 hosts.
+          - os: ubuntu-latest
+            vectorize: 'NEON'
+          - os: windows-latest
+            vectorize: 'NEON'
+          - os: ubuntu-22.04-arm
+            vectorize: 'SSE 4.2'
+          - os: ubuntu-22.04-arm
+            vectorize: 'AVX'
+          - os: ubuntu-22.04-arm
+            vectorize: 'AVX 2'
+          - os: ubuntu-22.04-arm
+            vectorize: 'AVX 512'
+          - os: windows-11-arm
+            vectorize: 'SSE 4.2'
+          - os: windows-11-arm
+            vectorize: 'AVX'
+          - os: windows-11-arm
+            vectorize: 'AVX 2'
+          - os: windows-11-arm
+            vectorize: 'AVX 512'
           # Emscripten's headers only emulate up to SSE 4.2 over wasm32 SIMD128;
           # there is no __m256/__m512 support to target AVX/AVX2/AVX512 with.
           - c_compiler: emcc
@@ -91,8 +137,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.conan2
-          key: conan2-${{ runner.os }}-${{ matrix.c_compiler }}-${{ hashFiles('**/conanfile.*') }}
-          restore-keys: conan2-${{ runner.os }}-${{ matrix.c_compiler }}-
+          # Keyed on matrix.os rather than runner.os: ubuntu-latest and
+          # ubuntu-22.04-arm both report runner.os Linux but build
+          # architecture-specific binaries, so runner.os alone would collide
+          # x64 and arm64 caches under the same gcc-12/clang-18 compiler name.
+          key: conan2-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ hashFiles('**/conanfile.*') }}
+          restore-keys: conan2-${{ matrix.os }}-${{ matrix.c_compiler }}-
 
       - name: Detect default Conan profile
         if: steps.conan-cache.outputs.cache-hit != 'true'
@@ -161,11 +211,13 @@ jobs:
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: node weaver_tests.js
 
-  # No GitHub-hosted runner is ARM, so the NEON backend is cross-compiled here
-  # on an x86 runner and its tests are run through QEMU user-mode emulation
-  # instead. CMAKE_CROSSCOMPILING_EMULATOR (set explicitly below, since Conan
-  # doesn't know about QEMU) makes both `cmake --build` and `ctest` transparently
-  # exec test binaries as e.g. `qemu-arm -L /usr/arm-linux-gnueabihf <binary>`.
+  # GitHub-hosted arm64 runners (ubuntu-22.04-arm, windows-11-arm) cover
+  # aarch64 natively in the main build matrix above, but there's no 32-bit ARM
+  # hosted runner, so armv7hf is still cross-compiled here on an x86 runner
+  # and its tests run through QEMU user-mode emulation instead.
+  # CMAKE_CROSSCOMPILING_EMULATOR (set explicitly below, since Conan doesn't
+  # know about QEMU) makes both `cmake --build` and `ctest` transparently exec
+  # test binaries as e.g. `qemu-arm -L /usr/arm-linux-gnueabihf <binary>`.
   build-arm:
     runs-on: ubuntu-latest
 
@@ -178,10 +230,6 @@ jobs:
             triple: arm-linux-gnueabihf
             qemu: qemu-arm
             profile: cmake-conan/arm_profile
-          - arch: aarch64
-            triple: aarch64-linux-gnu
-            qemu: qemu-aarch64
-            profile: cmake-conan/aarch64_profile
 
     steps:
       - uses: actions/checkout@v3
