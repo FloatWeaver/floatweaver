@@ -179,7 +179,9 @@ extern "C"
 #			define WEAVER_VECTORIZE_SSE
 #		endif
 #	endif
-#   include <nmmintrin.h>
+#	ifdef WEAVER_VECTORIZE_SSE
+#		include <nmmintrin.h>
+#	endif
 #endif
 
 #if defined WEAVER_COMPILER_MSVC

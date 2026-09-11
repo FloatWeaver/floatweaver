@@ -30,6 +30,7 @@
 #	include <weaver/bool4_ref.h>
 #	include <weaver/bool8_ref.h>
 #	include <weaver/bool16_ref.h>
+#	include <weaver/common_ref.h>
 #endif
 
 namespace weaver
@@ -39,18 +40,7 @@ namespace weaver
 	using bool16 = VectorScalar<bool, 16>;
 }
 
-#define WEAVER_SIMD_BOOLS                                               \
-	using bool4 = weaver::bool4;                                        \
-	using bool8 = weaver::bool8;                                        \
-	using bool16 = weaver::bool16;                                      \
-	bool4 b4_0{ true, false, true, false };                             \
-	bool4 b4_1{ false, true, false, true };                             \
-	bool8 b8_0{ true, false, true, false, true, false, true, false };   \
-	bool8 b8_1{ false, true, false, true, false, true, false, true };   \
-	bool16 b16_0{ true, false, true, false, true, false, true, false,   \
-				  true, false, true, false, true, false, true, false }; \
-	bool16 b16_1{ false, true, false, true, false, true, false, true,   \
-				  false, true, false, true, false, true, false, true }
+#include "common_bool.h"
 
 TEST_CASE("BoolN", "[bool][operation]")
 {

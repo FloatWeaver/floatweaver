@@ -3,7 +3,23 @@ cmake_policy(SET CMP0048 NEW)
 
 project(FloatWeaver VERSION 0.1.0.0 LANGUAGES CXX)
 
-find_package(Eigen3 REQUIRED)
+# Eigen3: use a Conan/system package if one is available; otherwise fall back
+# to the "external/eigen" git submodule, so the project also builds with
+# nothing more than `git submodule update --init`.
+find_package(Eigen3 3.4 QUIET)
+if(NOT TARGET Eigen3::Eigen)
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/eigen/CMakeLists.txt")
+		message(STATUS "Eigen3 package not found, building from external/eigen submodule")
+		set(EIGEN3_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/eigen")
+		list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+		find_package(Eigen3 3.4 MODULE REQUIRED)
+	else()
+		message(FATAL_ERROR
+			"Eigen3 was not found, and external/eigen is not checked out. Either "
+			"install Eigen3 (e.g. 'conan install .') or run "
+			"'git submodule update --init external/eigen'.")
+	endif()
+endif()
 
 include(cmake/config.cmake)
 
@@ -88,7 +104,21 @@ weaver_target_sources(weaver "." ${SRC})
 
 # Only build tests when building as standalone project
 if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
-	find_package(Catch2 REQUIRED)
+	# Catch2: use a Conan/system package if one is available; otherwise fall
+	# back to the "external/catch2" git submodule.
+	find_package(Catch2 3 QUIET)
+	if(NOT TARGET Catch2::Catch2WithMain)
+		if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/catch2/CMakeLists.txt")
+			message(STATUS "Catch2 package not found, building from external/catch2 submodule")
+			add_subdirectory(external/catch2 EXCLUDE_FROM_ALL)
+			list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/external/catch2/extras")
+		else()
+			message(FATAL_ERROR
+				"Catch2 was not found, and external/catch2 is not checked out. Either "
+				"install Catch2 (e.g. 'conan install .') or run "
+				"'git submodule update --init external/catch2'.")
+		endif()
+	endif()
 
 	add_executable(weaver_tests "")
 	set(WEAVER_TEST_SRC
@@ -97,6 +127,9 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		src/tests/int.cpp
 
 		src/tests/common.h
+		src/tests/common_bool.h
+		src/tests/common_float.h
+		src/tests/common_int.h
 
 		src/tests/conditional.cpp
 		src/tests/eigen_alignedbox.cpp
@@ -116,7 +149,13 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 	)
 	target_link_libraries(weaver_tests weaver Catch2::Catch2WithMain)
 
-	if(NOT CMAKE_CROSSCOMPILING)
+	# catch_discover_tests() needs to run the freshly-built test executable to
+	# enumerate its test cases. When cross-compiling that only works if CMake
+	# knows how to execute foreign-architecture binaries, i.e. when
+	# CMAKE_CROSSCOMPILING_EMULATOR is set (e.g. "qemu-arm -L ..." for a NEON
+	# build cross-compiled for ARM/AArch64). Plain Emscripten builds don't set
+	# it -- CI drives those through `node weaver_tests.js` directly instead.
+	if(NOT CMAKE_CROSSCOMPILING OR (CMAKE_CROSSCOMPILING_EMULATOR AND NOT EMSCRIPTEN))
 		include(CTest)
 		include(Catch)
 		catch_discover_tests(weaver_tests)

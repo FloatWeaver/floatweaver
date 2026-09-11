@@ -30,6 +30,7 @@
 #	include <weaver/int4_ref.h>
 #	include <weaver/int8_ref.h>
 #	include <weaver/int16_ref.h>
+#	include <weaver/common_ref.h>
 #endif
 
 namespace weaver
@@ -39,16 +40,7 @@ namespace weaver
 	using int16 = VectorScalar<int, 16>;
 }
 
-#define WEAVER_SIMD_INTS                                                    \
-	using int4 = weaver::int4;                                              \
-	using int8 = weaver::int8;                                              \
-	using int16 = weaver::int16;                                            \
-	int4 i4_asc{ 1, 2, 3, 4 };                                              \
-	int4 i4_desc{ 4, 3, 2, 1 };                                             \
-	int8 i8_asc{ 1, 2, 3, 4, 5, 6, 7, 8 };                                  \
-	int8 i8_desc{ 8, 7, 6, 5, 4, 3, 2, 1 };                                 \
-	int16 i16_asc{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 }; \
-	int16 i16_desc{ 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 }
+#include "common_int.h"
 
 TEST_CASE("IntN", "[int][operation]")
 {

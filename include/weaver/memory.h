@@ -124,6 +124,15 @@ namespace weaver {
 
 	template<typename T, int Width>
 	WEAVER_STRONG_INLINE void load(
+		Eigen::Matrix<VectorScalar<T, Width>, 2, 1>& loaded,
+		const Eigen::Matrix<T, 2, 1>* base)
+	{
+		loaded(0) = VectorScalar<T, Width>(base->data() + 0, 2);
+		loaded(1) = VectorScalar<T, Width>(base->data() + 1, 2);
+	}
+
+	template<typename T, int Width>
+	WEAVER_STRONG_INLINE void load(
 		Eigen::Matrix<VectorScalar<T, Width>, 3, 1>& loaded,
 		const Eigen::Matrix<T, 3, 1>* base)
 	{
@@ -141,6 +150,38 @@ namespace weaver {
 		loaded(1) = VectorScalar<T, Width>(base->data() + 1, 4);
 		loaded(2) = VectorScalar<T, Width>(base->data() + 2, 4);
 		loaded(3) = VectorScalar<T, Width>(base->data() + 3, 4);
+	}
+
+	template<typename T, int Width>
+	WEAVER_STRONG_INLINE void store(T* base, const VectorScalar<T, Width>& value)
+	{
+		for (int i = 0; i < Width; i++)
+			base[i] = value[i];
+	}
+
+	template<typename T, int Width>
+	WEAVER_STRONG_INLINE void store(
+		Eigen::Matrix<T, 2, 1>* base,
+		const Eigen::Matrix<VectorScalar<T, Width>, 2, 1>& value)
+	{
+		for (int i = 0; i < Width; i++)
+		{
+			base[i](0) = value(0)[i];
+			base[i](1) = value(1)[i];
+		}
+	}
+
+	template<typename T, int Width>
+	WEAVER_STRONG_INLINE void store(
+		Eigen::Matrix<T, 3, 1>* base,
+		const Eigen::Matrix<VectorScalar<T, Width>, 3, 1>& value)
+	{
+		for (int i = 0; i < Width; i++)
+		{
+			base[i](0) = value(0)[i];
+			base[i](1) = value(1)[i];
+			base[i](2) = value(2)[i];
+		}
 	}
 
 	template<typename T, int Width>
