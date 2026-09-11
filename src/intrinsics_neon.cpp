@@ -123,7 +123,13 @@ namespace weaver {
 	float32x4_t weaver_vsqrtq_f32(float32x4_t x)
 	{
 		const float4 v{ x };
-		return select(v == 0.0f, 0.0f, v * rsqrt(v)).get(0);
+		const float4 posInf{ std::numeric_limits<float>::infinity() };
+
+		// v * rsqrt(v) breaks down for +Inf: the rsqrt estimate underflows to
+		// 0 for such a large input, so the product becomes Inf * 0 = NaN
+		// instead of the correct +Inf. Zero is special-cased for the
+		// analogous reason (0 * Inf = NaN).
+		return select(v == posInf, posInf, select(v == 0.0f, float4(0.0f), v * rsqrt(v))).get(0);
 	}
 }
 #endif
