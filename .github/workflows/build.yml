@@ -14,47 +14,62 @@ jobs:
       fail-fast: false
 
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        build_type: [Release]
-        c_compiler: [gcc-12, clang-18, cl, emcc]
-        # One leg per WEAVER_VECTORIZE backend, so every op-codegen change is
-        # actually compiled (and, where the runner's CPU allows it, run)
-        # against all of ref/SSE/AVX/AVX2/AVX512 rather than just the SSE 4.2
-        # default. NEON is not covered here: none of the hosted runners below
-        # are ARM.
-        vectorize: ['Generic', 'SSE 4.2', 'AVX', 'AVX 2', 'AVX 512']
+        # Every valid (os, compiler, vectorize) combination is listed
+        # directly, rather than built from a cross product pruned down with
+        # exclude: — each host only supports one arch-appropriate
+        # compiler/backend pairing (x86 hosts: SSE/AVX/AVX2/AVX512; arm64
+        # hosts: NEON; only x64 Linux also gets emcc), so a full cross
+        # product needed far more exclude rules than valid combinations.
+        # Adding a new host, compiler, or backend is just adding rows here.
         include:
-          - os: windows-latest
-            c_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: gcc-12
-            cxx_compiler: g++-12
-          - os: ubuntu-latest
-            c_compiler: clang-18
-            cxx_compiler: clang++-18
-        exclude:
-          - os: windows-latest
-            c_compiler: gcc-12
-          - os: windows-latest
-            c_compiler: clang-18
-          - os: windows-latest
-            c_compiler: emcc
-          - os: ubuntu-latest
-            c_compiler: cl
-          # Emscripten's headers only emulate up to SSE 4.2 over wasm32 SIMD128;
-          # there is no __m256/__m512 support to target AVX/AVX2/AVX512 with.
-          - c_compiler: emcc
-            vectorize: 'AVX'
-          - c_compiler: emcc
-            vectorize: 'AVX 2'
-          - c_compiler: emcc
-            vectorize: 'AVX 512'
+          # ubuntu-latest (x64)
+          - { os: ubuntu-latest, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: Generic,   build_type: Release }
+          - { os: ubuntu-latest, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: 'SSE 4.2', build_type: Release }
+          - { os: ubuntu-latest, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: AVX,       build_type: Release }
+          - { os: ubuntu-latest, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: 'AVX 2',   build_type: Release }
+          - { os: ubuntu-latest, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: 'AVX 512', build_type: Release }
+          - { os: ubuntu-latest, c_compiler: clang-18, cxx_compiler: clang++-18, vectorize: Generic,   build_type: Release }
+          - { os: ubuntu-latest, c_compiler: clang-18, cxx_compiler: clang++-18, vectorize: 'SSE 4.2', build_type: Release }
+          - { os: ubuntu-latest, c_compiler: clang-18, cxx_compiler: clang++-18, vectorize: AVX,       build_type: Release }
+          - { os: ubuntu-latest, c_compiler: clang-18, cxx_compiler: clang++-18, vectorize: 'AVX 2',   build_type: Release }
+          - { os: ubuntu-latest, c_compiler: clang-18, cxx_compiler: clang++-18, vectorize: 'AVX 512', build_type: Release }
+          # Emscripten's headers only emulate up to SSE 4.2 over wasm32
+          # SIMD128; no __m256/__m512 to target AVX/AVX2/AVX512 with.
+          - { os: ubuntu-latest, c_compiler: emcc, vectorize: Generic,   build_type: Release }
+          - { os: ubuntu-latest, c_compiler: emcc, vectorize: 'SSE 4.2', build_type: Release }
+
+          # windows-latest (x64)
+          - { os: windows-latest, c_compiler: cl, vectorize: Generic,   build_type: Release }
+          - { os: windows-latest, c_compiler: cl, vectorize: 'SSE 4.2', build_type: Release }
+          - { os: windows-latest, c_compiler: cl, vectorize: AVX,       build_type: Release }
+          - { os: windows-latest, c_compiler: cl, vectorize: 'AVX 2',   build_type: Release }
+          - { os: windows-latest, c_compiler: cl, vectorize: 'AVX 512', build_type: Release }
+
+          # ubuntu-22.04-arm (native GitHub-hosted arm64 runner). Uses
+          # clang-15, not clang-18: that's what's actually preinstalled on
+          # this image, unlike its x64 counterpart.
+          - { os: ubuntu-22.04-arm, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: Generic, build_type: Release }
+          - { os: ubuntu-22.04-arm, c_compiler: gcc-12,   cxx_compiler: g++-12,     vectorize: NEON,    build_type: Release }
+          - { os: ubuntu-22.04-arm, c_compiler: clang-15, cxx_compiler: clang++-15, vectorize: Generic, build_type: Release }
+          - { os: ubuntu-22.04-arm, c_compiler: clang-15, cxx_compiler: clang++-15, vectorize: NEON,    build_type: Release }
+
+          # windows-11-arm (native GitHub-hosted arm64 runner)
+          - { os: windows-11-arm, c_compiler: cl, vectorize: Generic, build_type: Release }
+          - { os: windows-11-arm, c_compiler: cl, vectorize: NEON,    build_type: Release }
+
+          # macos-26 (native GitHub-hosted Apple Silicon runner). Xcode's
+          # clang isn't a versioned llvm.org build like clang-18/clang-15,
+          # so it gets its own unversioned c_compiler value.
+          - { os: macos-26, c_compiler: clang, cxx_compiler: clang++, vectorize: Generic, build_type: Release }
+          - { os: macos-26, c_compiler: clang, cxx_compiler: clang++, vectorize: NEON,    build_type: Release }
 
     steps:
       - uses: actions/checkout@v3
 
       - name: Setup build toolchain configuration
-        if: "${{ matrix.c_compiler == 'gcc-12' || matrix.c_compiler == 'clang-18' }}"
+        # Every non-MSVC, non-emcc leg (gcc-12/clang-18/clang) sets cxx_compiler
+        # via its include entry above; cl and emcc don't need CC/CXX overridden.
+        if: "${{ matrix.cxx_compiler != '' }}"
         run: |
           echo "CC=${{ matrix.c_compiler }}" >> $GITHUB_ENV
           echo "CXX=${{ matrix.cxx_compiler }}" >> $GITHUB_ENV
@@ -91,8 +106,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.conan2
-          key: conan2-${{ runner.os }}-${{ matrix.c_compiler }}-${{ hashFiles('**/conanfile.*') }}
-          restore-keys: conan2-${{ runner.os }}-${{ matrix.c_compiler }}-
+          # Keyed on matrix.os rather than runner.os: ubuntu-latest and
+          # ubuntu-22.04-arm both report runner.os Linux but build
+          # architecture-specific binaries, so runner.os alone would collide
+          # x64 and arm64 caches under the same gcc-12/clang-18 compiler name.
+          key: conan2-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ hashFiles('**/conanfile.*') }}
+          restore-keys: conan2-${{ matrix.os }}-${{ matrix.c_compiler }}-
 
       - name: Detect default Conan profile
         if: steps.conan-cache.outputs.cache-hit != 'true'
@@ -119,8 +138,8 @@ jobs:
         # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-      - name: Test (Linux)
-        if: "${{ runner.os == 'Linux' && matrix.c_compiler != 'emcc' }}"
+      - name: Test (Linux/macOS)
+        if: "${{ (runner.os == 'Linux' || runner.os == 'macOS') && matrix.c_compiler != 'emcc' }}"
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
@@ -128,7 +147,9 @@ jobs:
         # AVX-512 is special-cased: GitHub-hosted runners don't guarantee AVX-512
         # CPU support even though the build above always compiles it (that's what
         # catches cross-backend interface bugs). If this runner's CPU lacks it,
-        # skip running rather than fail the job on an unrelated SIGILL.
+        # skip running rather than fail the job on an unrelated SIGILL. Only
+        # reachable on Linux (macOS legs are NEON-only, see the vectorize/os
+        # excludes above), so checking /proc/cpuinfo unconditionally is safe.
         run: |
           if [ "${{ matrix.vectorize }}" = "AVX 512" ]; then
             if ! grep -qE '\bavx512f\b' /proc/cpuinfo || ! grep -qE '\bavx512vl\b' /proc/cpuinfo || ! grep -qE '\bavx512dq\b' /proc/cpuinfo; then
@@ -161,11 +182,13 @@ jobs:
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: node weaver_tests.js
 
-  # No GitHub-hosted runner is ARM, so the NEON backend is cross-compiled here
-  # on an x86 runner and its tests are run through QEMU user-mode emulation
-  # instead. CMAKE_CROSSCOMPILING_EMULATOR (set explicitly below, since Conan
-  # doesn't know about QEMU) makes both `cmake --build` and `ctest` transparently
-  # exec test binaries as e.g. `qemu-arm -L /usr/arm-linux-gnueabihf <binary>`.
+  # GitHub-hosted arm64 runners (ubuntu-22.04-arm, windows-11-arm) cover
+  # aarch64 natively in the main build matrix above, but there's no 32-bit ARM
+  # hosted runner, so armv7hf is still cross-compiled here on an x86 runner
+  # and its tests run through QEMU user-mode emulation instead.
+  # CMAKE_CROSSCOMPILING_EMULATOR (set explicitly below, since Conan doesn't
+  # know about QEMU) makes both `cmake --build` and `ctest` transparently exec
+  # test binaries as e.g. `qemu-arm -L /usr/arm-linux-gnueabihf <binary>`.
   build-arm:
     runs-on: ubuntu-latest
 
@@ -178,10 +201,6 @@ jobs:
             triple: arm-linux-gnueabihf
             qemu: qemu-arm
             profile: cmake-conan/arm_profile
-          - arch: aarch64
-            triple: aarch64-linux-gnu
-            qemu: qemu-aarch64
-            profile: cmake-conan/aarch64_profile
 
     steps:
       - uses: actions/checkout@v3
