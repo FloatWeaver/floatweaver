@@ -127,6 +127,9 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		src/tests/int.cpp
 
 		src/tests/common.h
+		src/tests/common_bool.h
+		src/tests/common_float.h
+		src/tests/common_int.h
 
 		src/tests/conditional.cpp
 		src/tests/eigen_alignedbox.cpp
