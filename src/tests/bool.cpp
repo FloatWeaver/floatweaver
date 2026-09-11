@@ -30,6 +30,7 @@
 #	include <weaver/bool4_ref.h>
 #	include <weaver/bool8_ref.h>
 #	include <weaver/bool16_ref.h>
+#	include <weaver/common_ref.h>
 #endif
 
 namespace weaver

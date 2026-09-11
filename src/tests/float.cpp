@@ -30,6 +30,7 @@
 #	include <weaver/float4_ref.h>
 #	include <weaver/float8_ref.h>
 #	include <weaver/float16_ref.h>
+#	include <weaver/common_ref.h>
 #endif
 
 namespace weaver
