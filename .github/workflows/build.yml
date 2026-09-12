@@ -90,6 +90,40 @@ jobs:
           else
             echo "host-profile=" >> $GITHUB_OUTPUT
           fi
+          # ubuntu-latest runners don't guarantee AVX-512 CPU support. When
+          # this specific runner's CPU lacks it, fall back to running tests
+          # under Intel SDE (a dynamic binary instrumentation-based emulator,
+          # unlike QEMU's TCG it's built by Intel specifically to emulate
+          # exact Intel microarchitectures, including newer ISA extensions on
+          # hardware that predates them). When the runner does have real
+          # AVX-512 hardware, this is left empty and the tests just run
+          # natively (faster, and exercises the actual CPU).
+          #
+          # QEMU's qemu-x86_64 user-mode TCG emulator was tried first, since
+          # this workflow already uses it for the armv7 cross job, but its
+          # AVX-512 instruction coverage turned out to be too incomplete for
+          # this codebase's actual instruction mix: most tests segfaulted
+          # under it (inconsistently — some passed, most didn't — pointing at
+          # gaps in specific instruction forms rather than a config mistake).
+          if [ "$RUNNER_OS" = "Linux" ] && [ "${{ matrix.vectorize }}" = "AVX 512" ] \
+             && ! (grep -qE '\bavx512f\b' /proc/cpuinfo && grep -qE '\bavx512vl\b' /proc/cpuinfo && grep -qE '\bavx512dq\b' /proc/cpuinfo); then
+            echo 'avx512-emulator-arg=-DCMAKE_CROSSCOMPILING_EMULATOR="${{ github.workspace }}/sde/sde64;-skx;--"' >> "$GITHUB_OUTPUT"
+          else
+            echo "avx512-emulator-arg=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Intel SDE (AVX-512 emulation)
+        if: "${{ runner.os == 'Linux' && matrix.vectorize == 'AVX 512' && steps.strings.outputs.avx512-emulator-arg != '' }}"
+        # Downloads Intel's Software Development Emulator (a free-to-use,
+        # proprietary tool; see Intel's SDE license) and pins it to a known
+        # version/checksum rather than trusting whatever "latest" resolves to.
+        # -skx targets Skylake-X, the first mainstream Intel microarchitecture
+        # with AVX-512F/CD/BW/DQ/VL, matching what this project actually needs.
+        run: |
+          curl -sL -o sde.tar.xz "https://downloadmirror.intel.com/924984/sde-external-10.13.1-2026-07-28-lin.tar.xz"
+          echo "94e97d623fec54385686e1e7ba65ebc9941748c05ee451423948334892bf2b50  sde.tar.xz" | sha256sum -c -
+          mkdir -p sde
+          tar -xf sde.tar.xz -C sde --strip-components=1
 
       - name: Cache pip packages
         uses: actions/cache@v3
@@ -133,6 +167,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE=${{ steps.strings.outputs.generators-dir }}/conan_toolchain.cmake
           -DWEAVER_VECTORIZE="${{ matrix.vectorize }}"
+          ${{ steps.strings.outputs.avx512-emulator-arg }}
 
       - name: Build
         # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
@@ -144,27 +179,21 @@ jobs:
         # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         #
-        # AVX-512 is special-cased: GitHub-hosted runners don't guarantee AVX-512
-        # CPU support even though the build above always compiles it (that's what
-        # catches cross-backend interface bugs). If this runner's CPU lacks it,
-        # skip running rather than fail the job on an unrelated SIGILL. Only
-        # reachable on Linux (macOS legs are NEON-only, see the vectorize/os
-        # excludes above), so checking /proc/cpuinfo unconditionally is safe.
-        run: |
-          if [ "${{ matrix.vectorize }}" = "AVX 512" ]; then
-            if ! grep -qE '\bavx512f\b' /proc/cpuinfo || ! grep -qE '\bavx512vl\b' /proc/cpuinfo || ! grep -qE '\bavx512dq\b' /proc/cpuinfo; then
-              echo "::warning::Skipping AVX-512 tests: this runner's CPU does not support avx512f/avx512vl/avx512dq."
-              exit 0
-            fi
-          fi
-          ctest --build-config ${{ matrix.build_type }}
+        # No special-casing needed here for AVX-512: Configure CMake already
+        # set CMAKE_CROSSCOMPILING_EMULATOR to route through Intel SDE
+        # whenever this runner's CPU doesn't natively support it, and left it
+        # empty (native execution) otherwise.
+        run: ctest --build-config ${{ matrix.build_type }}
 
       - name: Test (Windows)
         if: "${{ runner.os == 'Windows' }}"
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         shell: pwsh
-        # Same AVX-512 caveat as the Linux step above, checked via the .NET
-        # intrinsics support flag instead of /proc/cpuinfo.
+        # Windows-latest runners don't guarantee AVX-512 CPU support either,
+        # but unlike the Linux leg above this one isn't routed through an
+        # emulator, so it still skips rather than failing on an unrelated
+        # SIGILL/illegal instruction if the runner's CPU lacks it. Checked via
+        # the .NET intrinsics support flag instead of /proc/cpuinfo.
         run: |
           if ("${{ matrix.vectorize }}" -eq "AVX 512") {
             if (-not [System.Runtime.Intrinsics.X86.Avx512F]::IsSupported) {
