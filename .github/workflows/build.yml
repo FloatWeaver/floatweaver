@@ -92,23 +92,38 @@ jobs:
           fi
           # ubuntu-latest runners don't guarantee AVX-512 CPU support. When
           # this specific runner's CPU lacks it, fall back to running tests
-          # under QEMU's x86_64 user-mode emulator: TCG translates the AVX-512
-          # opcodes in software regardless of what the host CPU implements.
-          # When the runner does have real AVX-512 hardware, this is left
-          # empty and the tests just run natively (faster, and exercises the
-          # actual CPU rather than TCG's software model).
+          # under Intel SDE (a dynamic binary instrumentation-based emulator,
+          # unlike QEMU's TCG it's built by Intel specifically to emulate
+          # exact Intel microarchitectures, including newer ISA extensions on
+          # hardware that predates them). When the runner does have real
+          # AVX-512 hardware, this is left empty and the tests just run
+          # natively (faster, and exercises the actual CPU).
+          #
+          # QEMU's qemu-x86_64 user-mode TCG emulator was tried first, since
+          # this workflow already uses it for the armv7 cross job, but its
+          # AVX-512 instruction coverage turned out to be too incomplete for
+          # this codebase's actual instruction mix: most tests segfaulted
+          # under it (inconsistently — some passed, most didn't — pointing at
+          # gaps in specific instruction forms rather than a config mistake).
           if [ "$RUNNER_OS" = "Linux" ] && [ "${{ matrix.vectorize }}" = "AVX 512" ] \
              && ! (grep -qE '\bavx512f\b' /proc/cpuinfo && grep -qE '\bavx512vl\b' /proc/cpuinfo && grep -qE '\bavx512dq\b' /proc/cpuinfo); then
-            echo 'avx512-emulator-arg=-DCMAKE_CROSSCOMPILING_EMULATOR="qemu-x86_64;-cpu;max"' >> "$GITHUB_OUTPUT"
+            echo 'avx512-emulator-arg=-DCMAKE_CROSSCOMPILING_EMULATOR="${{ github.workspace }}/sde/sde64;-skx;--"' >> "$GITHUB_OUTPUT"
           else
             echo "avx512-emulator-arg=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install QEMU (AVX-512 emulation)
+      - name: Install Intel SDE (AVX-512 emulation)
         if: "${{ runner.os == 'Linux' && matrix.vectorize == 'AVX 512' && steps.strings.outputs.avx512-emulator-arg != '' }}"
+        # Downloads Intel's Software Development Emulator (a free-to-use,
+        # proprietary tool; see Intel's SDE license) and pins it to a known
+        # version/checksum rather than trusting whatever "latest" resolves to.
+        # -skx targets Skylake-X, the first mainstream Intel microarchitecture
+        # with AVX-512F/CD/BW/DQ/VL, matching what this project actually needs.
         run: |
-          sudo apt-get update
-          sudo apt-get install -y qemu-user
+          curl -sL -o sde.tar.xz "https://downloadmirror.intel.com/924984/sde-external-10.13.1-2026-07-28-lin.tar.xz"
+          echo "94e97d623fec54385686e1e7ba65ebc9941748c05ee451423948334892bf2b50  sde.tar.xz" | sha256sum -c -
+          mkdir -p sde
+          tar -xf sde.tar.xz -C sde --strip-components=1
 
       - name: Cache pip packages
         uses: actions/cache@v3
@@ -165,9 +180,9 @@ jobs:
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         #
         # No special-casing needed here for AVX-512: Configure CMake already
-        # set CMAKE_CROSSCOMPILING_EMULATOR to route through QEMU whenever
-        # this runner's CPU doesn't natively support it, and left it empty
-        # (native execution) otherwise.
+        # set CMAKE_CROSSCOMPILING_EMULATOR to route through Intel SDE
+        # whenever this runner's CPU doesn't natively support it, and left it
+        # empty (native execution) otherwise.
         run: ctest --build-config ${{ matrix.build_type }}
 
       - name: Test (Windows)
