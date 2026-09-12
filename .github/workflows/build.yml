@@ -90,6 +90,25 @@ jobs:
           else
             echo "host-profile=" >> $GITHUB_OUTPUT
           fi
+          # ubuntu-latest runners don't guarantee AVX-512 CPU support. When
+          # this specific runner's CPU lacks it, fall back to running tests
+          # under QEMU's x86_64 user-mode emulator: TCG translates the AVX-512
+          # opcodes in software regardless of what the host CPU implements.
+          # When the runner does have real AVX-512 hardware, this is left
+          # empty and the tests just run natively (faster, and exercises the
+          # actual CPU rather than TCG's software model).
+          if [ "$RUNNER_OS" = "Linux" ] && [ "${{ matrix.vectorize }}" = "AVX 512" ] \
+             && ! (grep -qE '\bavx512f\b' /proc/cpuinfo && grep -qE '\bavx512vl\b' /proc/cpuinfo && grep -qE '\bavx512dq\b' /proc/cpuinfo); then
+            echo 'avx512-emulator-arg=-DCMAKE_CROSSCOMPILING_EMULATOR="qemu-x86_64;-cpu;max"' >> "$GITHUB_OUTPUT"
+          else
+            echo "avx512-emulator-arg=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install QEMU (AVX-512 emulation)
+        if: "${{ runner.os == 'Linux' && matrix.vectorize == 'AVX 512' && steps.strings.outputs.avx512-emulator-arg != '' }}"
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-user
 
       - name: Cache pip packages
         uses: actions/cache@v3
@@ -133,6 +152,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_TOOLCHAIN_FILE=${{ steps.strings.outputs.generators-dir }}/conan_toolchain.cmake
           -DWEAVER_VECTORIZE="${{ matrix.vectorize }}"
+          ${{ steps.strings.outputs.avx512-emulator-arg }}
 
       - name: Build
         # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
@@ -144,27 +164,21 @@ jobs:
         # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         #
-        # AVX-512 is special-cased: GitHub-hosted runners don't guarantee AVX-512
-        # CPU support even though the build above always compiles it (that's what
-        # catches cross-backend interface bugs). If this runner's CPU lacks it,
-        # skip running rather than fail the job on an unrelated SIGILL. Only
-        # reachable on Linux (macOS legs are NEON-only, see the vectorize/os
-        # excludes above), so checking /proc/cpuinfo unconditionally is safe.
-        run: |
-          if [ "${{ matrix.vectorize }}" = "AVX 512" ]; then
-            if ! grep -qE '\bavx512f\b' /proc/cpuinfo || ! grep -qE '\bavx512vl\b' /proc/cpuinfo || ! grep -qE '\bavx512dq\b' /proc/cpuinfo; then
-              echo "::warning::Skipping AVX-512 tests: this runner's CPU does not support avx512f/avx512vl/avx512dq."
-              exit 0
-            fi
-          fi
-          ctest --build-config ${{ matrix.build_type }}
+        # No special-casing needed here for AVX-512: Configure CMake already
+        # set CMAKE_CROSSCOMPILING_EMULATOR to route through QEMU whenever
+        # this runner's CPU doesn't natively support it, and left it empty
+        # (native execution) otherwise.
+        run: ctest --build-config ${{ matrix.build_type }}
 
       - name: Test (Windows)
         if: "${{ runner.os == 'Windows' }}"
         working-directory: ${{ steps.strings.outputs.build-output-dir }}
         shell: pwsh
-        # Same AVX-512 caveat as the Linux step above, checked via the .NET
-        # intrinsics support flag instead of /proc/cpuinfo.
+        # Windows-latest runners don't guarantee AVX-512 CPU support either,
+        # but unlike the Linux leg above this one isn't routed through an
+        # emulator, so it still skips rather than failing on an unrelated
+        # SIGILL/illegal instruction if the runner's CPU lacks it. Checked via
+        # the .NET intrinsics support flag instead of /proc/cpuinfo.
         run: |
           if ("${{ matrix.vectorize }}" -eq "AVX 512") {
             if (-not [System.Runtime.Intrinsics.X86.Avx512F]::IsSupported) {
