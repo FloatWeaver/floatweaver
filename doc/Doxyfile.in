@@ -1,0 +1,29 @@
+# Minimal Doxygen config for FloatWeaver.
+#
+# This only lists the settings that differ from Doxygen's defaults -- run
+# `doxygen -g -` to see the (very long) full set if you need to tweak
+# something not covered here.
+#
+# Configured by CMake (see the WEAVER_BUILD_DOCS option in
+# cmake/config.cmake) and consumed by Sphinx/Breathe, not viewed directly:
+# GENERATE_HTML is off because Sphinx renders the final site, this step only
+# produces the XML Breathe reads.
+
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = FloatWeaver
+PROJECT_NUMBER         = @PROJECT_VERSION@
+PROJECT_BRIEF          = "CUDA-style SIMD vector types for the CPU"
+
+OUTPUT_DIRECTORY       = @CMAKE_CURRENT_BINARY_DIR@/doxygen
+INPUT                  = @PROJECT_SOURCE_DIR@/include/weaver
+STRIP_FROM_PATH        = @PROJECT_SOURCE_DIR@/include
+
+RECURSIVE              = NO
+EXTRACT_ALL            = NO
+WARN_IF_UNDOCUMENTED   = NO
+QUIET                  = YES
+
+GENERATE_HTML          = NO
+GENERATE_LATEX         = NO
+GENERATE_XML           = YES
+XML_OUTPUT             = xml

@@ -1,0 +1,59 @@
+name: Documentation
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('doc/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install Conan2 and Sphinx/Breathe
+        run: |
+          pip install conan
+          pip install -r doc/requirements.txt
+
+      - name: Cache Conan dependencies
+        id: conan-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2
+          key: conan2-${{ runner.os }}-docs-${{ hashFiles('**/conanfile.*') }}
+          restore-keys: conan2-${{ runner.os }}-docs-
+
+      - name: Detect default Conan profile
+        if: steps.conan-cache.outputs.cache-hit != 'true'
+        run: conan profile detect
+
+      - name: Install Conan Dependencies
+        run: conan install --build=missing -of ${{ github.workspace }}/build ${{ github.workspace }}
+
+      - name: Configure CMake
+        run: >
+          cmake -S ${{ github.workspace }}
+          -B ${{ github.workspace }}/build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/build/build/Release/generators/conan_toolchain.cmake
+          -DWEAVER_BUILD_DOCS=ON
+
+      # Sphinx runs with -W (warnings-as-errors, set in the `docs` CMake
+      # target): a \snippet or literalinclude referencing a tag that no
+      # longer exists fails the build here instead of silently shipping a
+      # blank code block.
+      - name: Build documentation
+        run: cmake --build ${{ github.workspace }}/build --target docs

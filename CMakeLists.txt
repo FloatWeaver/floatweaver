@@ -142,6 +142,15 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 	)
 	weaver_target_sources(weaver_tests "src" ${WEAVER_TEST_SRC})
 
+	# Documentation snippets double as tests: every //! [tag] block in
+	# doc/snippets is referenced verbatim from the Sphinx/Doxygen docs, so
+	# compiling and running it here is what keeps an example from silently
+	# drifting out of sync with the API it documents.
+	set(WEAVER_DOC_SNIPPET_SRC
+		doc/snippets/float8_snippets.cpp
+	)
+	weaver_target_sources(weaver_tests "doc" ${WEAVER_DOC_SNIPPET_SRC})
+
 	set_target_properties(weaver_tests PROPERTIES
 		CXX_STANDARD ${WEAVER_CXX_STANDARD}
 		CXX_STANDARD_REQUIRED YES
@@ -160,4 +169,30 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		include(Catch)
 		catch_discover_tests(weaver_tests)
 	endif()
+endif()
+
+# Doxygen -> Breathe -> Sphinx documentation, off by default so a plain
+# `cmake --build` never needs Doxygen/Python/Sphinx installed.
+if(WEAVER_BUILD_DOCS)
+	find_package(Doxygen REQUIRED)
+	find_program(SPHINX_EXECUTABLE sphinx-build REQUIRED)
+
+	set(WEAVER_DOXYGEN_XML_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen/xml")
+	configure_file(
+		"${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in"
+		"${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+		@ONLY
+	)
+
+	add_custom_target(docs
+		COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
+		COMMAND "${CMAKE_COMMAND}" -E env
+			"WEAVER_DOXYGEN_XML_DIR=${WEAVER_DOXYGEN_XML_DIR}"
+			"${SPHINX_EXECUTABLE}" -b html -W
+				"${CMAKE_CURRENT_SOURCE_DIR}/doc/sphinx"
+				"${CMAKE_CURRENT_BINARY_DIR}/sphinx"
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+		COMMENT "Building Doxygen XML and Sphinx HTML documentation"
+		VERBATIM
+	)
 endif()
