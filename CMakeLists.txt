@@ -148,6 +148,7 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 	# drifting out of sync with the API it documents.
 	set(WEAVER_DOC_SNIPPET_SRC
 		doc/snippets/float8_snippets.cpp
+		doc/snippets/float8_asm.cpp
 	)
 	weaver_target_sources(weaver_tests "doc" ${WEAVER_DOC_SNIPPET_SRC})
 
@@ -175,7 +176,14 @@ endif()
 # `cmake --build` never needs Doxygen/Python/Sphinx installed.
 if(WEAVER_BUILD_DOCS)
 	find_package(Doxygen REQUIRED)
+	find_package(Python3 COMPONENTS Interpreter REQUIRED)
 	find_program(SPHINX_EXECUTABLE sphinx-build REQUIRED)
+	# objdump ships with binutils, i.e. whatever gcc/clang toolchain is
+	# already on hand on Linux/macOS -- WEAVER_BUILD_DOCS is scoped to that,
+	# not to every CI backend/compiler this project builds against. The
+	# extracted instructions naturally differ by compiler/OS; that's fine,
+	# it's showing whatever the configured toolchain actually generated.
+	find_program(WEAVER_OBJDUMP objdump REQUIRED)
 
 	set(WEAVER_DOXYGEN_XML_DIR "${CMAKE_CURRENT_BINARY_DIR}/doxygen/xml")
 	configure_file(
@@ -184,13 +192,41 @@ if(WEAVER_BUILD_DOCS)
 		@ONLY
 	)
 
+	# doc/snippets/*_asm.cpp functions are compiled here in isolation (their
+	# own OBJECT library, no LTO, no other call sites in the program) so
+	# doc/tools/extract_asm.py can disassemble the actual vector instructions
+	# they generate for the how-to guides, rather than just asserting
+	# FloatWeaver is vectorized.
+	add_library(weaver_doc_asm OBJECT doc/snippets/float8_asm.cpp)
+	weaver_configure_target(weaver_doc_asm)
+	target_link_libraries(weaver_doc_asm PRIVATE Eigen3::Eigen Catch2::Catch2WithMain)
+	target_include_directories(weaver_doc_asm PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+
+	set(WEAVER_ASM_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/asm")
+	set(WEAVER_ASM_ADD_FLOAT8 "${WEAVER_ASM_DIR}/add_float8.txt")
+	add_custom_command(
+		OUTPUT "${WEAVER_ASM_ADD_FLOAT8}"
+		COMMAND "${CMAKE_COMMAND}" -E make_directory "${WEAVER_ASM_DIR}"
+		COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/doc/tools/extract_asm.py"
+			--objdump "${WEAVER_OBJDUMP}"
+			--object "$<TARGET_OBJECTS:weaver_doc_asm>"
+			--symbol add_float8
+			--output "${WEAVER_ASM_ADD_FLOAT8}"
+		DEPENDS weaver_doc_asm "$<TARGET_OBJECTS:weaver_doc_asm>"
+		COMMENT "Extracting assembly for add_float8"
+		VERBATIM
+	)
+	add_custom_target(weaver_doc_asm_extract DEPENDS "${WEAVER_ASM_ADD_FLOAT8}")
+
 	add_custom_target(docs
 		COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile"
 		COMMAND "${CMAKE_COMMAND}" -E env
 			"WEAVER_DOXYGEN_XML_DIR=${WEAVER_DOXYGEN_XML_DIR}"
+			"WEAVER_ASM_DIR=${WEAVER_ASM_DIR}"
 			"${SPHINX_EXECUTABLE}" -b html -W
 				"${CMAKE_CURRENT_SOURCE_DIR}/doc/sphinx"
 				"${CMAKE_CURRENT_BINARY_DIR}/sphinx"
+		DEPENDS weaver_doc_asm_extract
 		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
 		COMMENT "Building Doxygen XML and Sphinx HTML documentation"
 		VERBATIM
