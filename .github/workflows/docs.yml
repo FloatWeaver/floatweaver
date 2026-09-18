@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: ['main']
 
+# Only one Pages deployment at a time; a push while one is still running
+# waits for it rather than racing it, but never cancels an in-progress
+# deployment (a half-published site would be worse than a delayed one).
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   docs:
     runs-on: ubuntu-latest
@@ -59,3 +69,30 @@ jobs:
       # ubuntu-latest already, no separate install needed.
       - name: Build documentation
         run: cmake --build ${{ github.workspace }}/build --target docs
+
+      # Runs on every push and PR (see above), but the artifact is only ever
+      # deployed by the `deploy` job below, which is gated to pushes on
+      # `main` -- so a PR still gets full build validation without
+      # publishing whatever's in the PR branch.
+      - name: Upload documentation artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ github.workspace }}/build/sphinx
+
+  deploy:
+    needs: docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
