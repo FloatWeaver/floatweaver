@@ -151,6 +151,28 @@ if("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
 		doc/snippets/float8_asm.cpp
 		doc/snippets/select_snippets.cpp
 		doc/snippets/select_asm.cpp
+		doc/snippets/sqrt_snippets.cpp
+		doc/snippets/sqrt_asm.cpp
+		doc/snippets/approx_snippets.cpp
+		doc/snippets/approx_asm.cpp
+		doc/snippets/sgn_snippets.cpp
+		doc/snippets/sgn_asm.cpp
+		doc/snippets/tolerance_snippets.cpp
+		doc/snippets/tolerance_asm.cpp
+		doc/snippets/reduce_snippets.cpp
+		doc/snippets/reduce_asm.cpp
+		doc/snippets/dot_snippets.cpp
+		doc/snippets/dot_asm.cpp
+		doc/snippets/eigen_add_snippets.cpp
+		doc/snippets/eigen_add_asm.cpp
+		doc/snippets/eigen_norm_snippets.cpp
+		doc/snippets/eigen_norm_asm.cpp
+		doc/snippets/eigen_cross_snippets.cpp
+		doc/snippets/eigen_cross_asm.cpp
+		doc/snippets/eigen_select_snippets.cpp
+		doc/snippets/eigen_select_asm.cpp
+		doc/snippets/eigen_alignedbox_snippets.cpp
+		doc/snippets/eigen_alignedbox_asm.cpp
 	)
 	weaver_target_sources(weaver_tests "doc" ${WEAVER_DOC_SNIPPET_SRC})
 
@@ -205,13 +227,57 @@ if(WEAVER_BUILD_DOCS)
 	add_library(weaver_doc_asm OBJECT
 		doc/snippets/float8_asm.cpp
 		doc/snippets/select_asm.cpp
+		doc/snippets/sqrt_asm.cpp
+		doc/snippets/approx_asm.cpp
+		doc/snippets/sgn_asm.cpp
+		doc/snippets/tolerance_asm.cpp
+		doc/snippets/reduce_asm.cpp
+		doc/snippets/dot_asm.cpp
+		doc/snippets/eigen_add_asm.cpp
+		doc/snippets/eigen_norm_asm.cpp
+		doc/snippets/eigen_cross_asm.cpp
+		doc/snippets/eigen_select_asm.cpp
+		doc/snippets/eigen_alignedbox_asm.cpp
 	)
 	weaver_configure_target(weaver_doc_asm)
 	target_link_libraries(weaver_doc_asm PRIVATE Eigen3::Eigen Catch2::Catch2WithMain)
 	target_include_directories(weaver_doc_asm PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 	set(WEAVER_ASM_DIR "${CMAKE_CURRENT_BINARY_DIR}/doc/asm")
-	set(WEAVER_ASM_SYMBOLS add_float8 select_max)
+	set(WEAVER_ASM_SYMBOLS
+		add_float8 select_max
+		sqrt_float8 rcp_float8 rsqrt_float8 sgn_float8
+		equal_tol_float8 any_greater_float8 dot_float8
+		add_vec3_float8 squared_norm_vec3_float8 cross_vec3_float8
+		select_vec3_float8 merge_box2_float8
+	)
+
+	# Where each symbol's arguments arrive, System V AMD64 (WEAVER_BUILD_DOCS
+	# only ever runs gcc/clang on Linux/macOS, so this is the only calling
+	# convention in play). Not derived automatically -- see extract_asm.py's
+	# --params for why -- so double-check this against the real disassembly
+	# whenever a signature here changes or a new example is added below.
+	# weaver::floatN/boolN arguments up to 32 bytes are trivial-for-calls and
+	# arrive directly in the next xmm/ymm register; Eigen::Matrix/AlignedBox
+	# arguments are not, so they arrive as a pointer in the next integer
+	# register instead, and when the *return* type is likewise non-trivial
+	# the caller additionally passes a hidden return-value pointer in RDI
+	# ahead of the real parameters.
+	set(WEAVER_ASM_PARAMS_add_float8 "ymm0 = a, ymm1 = b")
+	set(WEAVER_ASM_PARAMS_select_max "ymm0 = a, ymm1 = b")
+	set(WEAVER_ASM_PARAMS_sqrt_float8 "ymm0 = a")
+	set(WEAVER_ASM_PARAMS_rcp_float8 "ymm0 = a")
+	set(WEAVER_ASM_PARAMS_rsqrt_float8 "ymm0 = a")
+	set(WEAVER_ASM_PARAMS_sgn_float8 "ymm0 = a")
+	set(WEAVER_ASM_PARAMS_equal_tol_float8 "ymm0 = a, ymm1 = b, ymm2 = tol")
+	set(WEAVER_ASM_PARAMS_any_greater_float8 "ymm0 = a, ymm1 = b")
+	set(WEAVER_ASM_PARAMS_dot_float8 "ymm0 = a, ymm1 = b")
+	set(WEAVER_ASM_PARAMS_add_vec3_float8 "rdi = return-value pointer, rsi = &a, rdx = &b")
+	set(WEAVER_ASM_PARAMS_squared_norm_vec3_float8 "rdi = &v")
+	set(WEAVER_ASM_PARAMS_cross_vec3_float8 "rdi = return-value pointer, rsi = &a, rdx = &b")
+	set(WEAVER_ASM_PARAMS_select_vec3_float8 "ymm0 = mask, rdi = return-value pointer, rsi = &a, rdx = &b")
+	set(WEAVER_ASM_PARAMS_merge_box2_float8 "rdi = return-value pointer, rsi = &a, rdx = &b")
+
 	set(WEAVER_ASM_OUTPUTS "")
 	foreach(sym IN LISTS WEAVER_ASM_SYMBOLS)
 		set(out "${WEAVER_ASM_DIR}/${sym}.txt")
@@ -222,6 +288,7 @@ if(WEAVER_BUILD_DOCS)
 				--objdump "${WEAVER_OBJDUMP}"
 				--object "$<TARGET_OBJECTS:weaver_doc_asm>"
 				--symbol "${sym}"
+				--params "${WEAVER_ASM_PARAMS_${sym}}"
 				--output "${out}"
 			DEPENDS weaver_doc_asm "$<TARGET_OBJECTS:weaver_doc_asm>"
 			COMMENT "Extracting assembly for ${sym}"

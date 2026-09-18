@@ -26,6 +26,22 @@ _LABEL_RE = re.compile(r"^[0-9a-f]+\s+<(?P<name>.+)>:\s*$")
 # Matches one instruction line, e.g. " 130:\tendbr64" or " 134:\tvaddps ymm0,ymm1,ymm0"
 _INSN_RE = re.compile(r"^\s*[0-9a-f]+:\t(?P<insn>.*)$")
 
+# The CET landing pad gcc/clang emit as the first instruction of every
+# function on Linux (-fcf-protection, on by default) -- carries no
+# information about what the function computes, so it's dropped rather than
+# shown as if it were part of the example.
+_CET_LANDING_PAD_RE = re.compile(r"^endbr(32|64)$")
+
+# Inter-function alignment padding: objdump keeps printing instruction-shaped
+# lines after a function's last `ret`/`jmp` right up to the next label,
+# because the assembler pads the gap between functions with nops so the next
+# symbol starts on an aligned address. None of this executes as part of the
+# function -- it's a side effect of *where* the linker put the next symbol,
+# not of what this one does -- so it's stripped from the end of the listing.
+# Safe to do unconditionally: real function bodies don't end in a run of nops,
+# so this only ever matches genuine trailing padding.
+_PADDING_RE = re.compile(r"^(data16\s+)*(cs\s+)?(nop\b.*|xchg\s+ax,ax)$")
+
 
 def extract(objdump_output: str, symbol: str) -> list[str]:
 	lines = objdump_output.splitlines()
@@ -46,6 +62,12 @@ def extract(objdump_output: str, symbol: str) -> list[str]:
 		text = insn.group("insn").split("#", 1)[0].rstrip()
 		if text:
 			insns.append(text)
+
+	if insns and _CET_LANDING_PAD_RE.match(insns[0]):
+		insns.pop(0)
+	while insns and _PADDING_RE.match(insns[-1]):
+		insns.pop()
+
 	return insns
 
 
@@ -64,6 +86,19 @@ def main() -> int:
 	)
 	parser.add_argument("--symbol", required=True, help="plain (undecorated) function name to extract")
 	parser.add_argument("--output", required=True, help="where to write the extracted instructions")
+	parser.add_argument(
+		"--params",
+		default="",
+		help="optional 'reg = param, reg = param, ...' note on where the function's "
+		"arguments arrive, written as a leading comment. Not derived from the "
+		"disassembly -- the System V AMD64 calling convention (what "
+		"WEAVER_BUILD_DOCS always targets: gcc/clang on Linux/macOS) is "
+		"deterministic given a signature, but reliably re-deriving it in Python "
+		"would mean reimplementing its parameter-classification rules; instead "
+		"this is filled in by hand next to the symbol in WEAVER_ASM_SYMBOLS, "
+		"the same place a new example's *_asm.cpp already gets added, and "
+		"checked against the real disassembly when it's added.",
+	)
 	args = parser.parse_args()
 
 	for obj in args.object.split(";"):
@@ -78,8 +113,9 @@ def main() -> int:
 
 		insns = extract(result.stdout, args.symbol)
 		if insns:
+			lines = ([f"; {args.params}"] if args.params else []) + insns
 			with open(args.output, "w") as f:
-				f.write("\n".join(insns) + "\n")
+				f.write("\n".join(lines) + "\n")
 			return 0
 
 	print(
