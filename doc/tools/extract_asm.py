@@ -52,32 +52,42 @@ def extract(objdump_output: str, symbol: str) -> list[str]:
 def main() -> int:
 	parser = argparse.ArgumentParser(description=__doc__)
 	parser.add_argument("--objdump", required=True, help="path to the objdump executable")
-	parser.add_argument("--object", required=True, help="object file to disassemble")
+	parser.add_argument(
+		"--object",
+		required=True,
+		help="';'-joined object file(s) to search -- CMake's $<TARGET_OBJECTS:...> "
+		"is passed straight through as a single argument with its list "
+		"separator intact, not split into multiple argv entries. "
+		"weaver_doc_asm is one shared OBJECT library, so this expands to one "
+		"file per doc/snippets/*_asm.cpp; only one of them will actually "
+		"define --symbol",
+	)
 	parser.add_argument("--symbol", required=True, help="plain (undecorated) function name to extract")
 	parser.add_argument("--output", required=True, help="where to write the extracted instructions")
 	args = parser.parse_args()
 
-	result = subprocess.run(
-		[args.objdump, "-d", "--no-show-raw-insn", "-Mintel", "-C", args.object],
-		capture_output=True,
-		text=True,
-	)
-	if result.returncode != 0:
-		print(f"error: {args.objdump} failed:\n{result.stderr}", file=sys.stderr)
-		return 1
-
-	insns = extract(result.stdout, args.symbol)
-	if not insns:
-		print(
-			f"error: no disassembly found for symbol '{args.symbol}' in {args.object} "
-			"-- was it inlined away, or renamed?",
-			file=sys.stderr,
+	for obj in args.object.split(";"):
+		result = subprocess.run(
+			[args.objdump, "-d", "--no-show-raw-insn", "-Mintel", "-C", obj],
+			capture_output=True,
+			text=True,
 		)
-		return 1
+		if result.returncode != 0:
+			print(f"error: {args.objdump} failed on {obj}:\n{result.stderr}", file=sys.stderr)
+			return 1
 
-	with open(args.output, "w") as f:
-		f.write("\n".join(insns) + "\n")
-	return 0
+		insns = extract(result.stdout, args.symbol)
+		if insns:
+			with open(args.output, "w") as f:
+				f.write("\n".join(insns) + "\n")
+			return 0
+
+	print(
+		f"error: no disassembly found for symbol '{args.symbol}' in any of "
+		f"{args.object.replace(';', ', ')} -- was it inlined away, or renamed?",
+		file=sys.stderr,
+	)
+	return 1
 
 
 if __name__ == "__main__":

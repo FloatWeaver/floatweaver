@@ -37,3 +37,32 @@ emits a single ``vaddps`` on 8-wide ``ymm`` registers, while an SSE build
 splits the same 8 lanes across two 4-wide ``xmm`` registers instead. Either
 way, this is the real output of the currently configured toolchain, not a
 hand-picked example.
+
+Pick a value without branching
+-------------------------------
+
+FloatWeaver code has no real ``if``: an ``if`` would have to pick one branch
+for the whole vector, but different lanes can want different answers. Instead
+you compute both possibilities and use ``select`` to keep, per lane,
+whichever one the (also per-lane) condition asked for -- the branchless
+equivalent of ``a[i] < b[i] ? b[i] : a[i]``:
+
+.. literalinclude:: ../snippets/select_snippets.cpp
+   :language: cpp
+   :start-after: //! [Select branchless max]
+   :end-before: //! [Select branchless max]
+
+Same isolate-and-disassemble treatment as above
+(``doc/snippets/select_asm.cpp``):
+
+.. literalinclude:: ../snippets/select_asm.cpp
+   :language: cpp
+   :start-after: //! [Select branchless max asm]
+   :end-before: //! [Select branchless max asm]
+
+.. weaver-asm:: select_max
+
+Two instructions, no branch: a compare that produces a per-lane mask, then a
+blend that picks lanes from ``a`` or ``b`` according to that mask -- every
+lane gets computed, and the "wrong" one is simply discarded rather than
+skipped.
