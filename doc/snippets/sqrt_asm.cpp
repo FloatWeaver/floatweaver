@@ -24,5 +24,7 @@ TEST_CASE("Square root float8 (asm demo)", "[doc]")
 {
 	weaver::float8 a{ 4.0f, 9.0f, 16.0f, 25.0f, 1.0f, 100.0f, 64.0f, 36.0f };
 
-	REQUIRE(weaver::all(sqrt_float8(a) == weaver::float8{ 2.0f, 3.0f, 4.0f, 5.0f, 1.0f, 10.0f, 8.0f, 6.0f }));
+	// See doc/snippets/sqrt_snippets.cpp for why this is a tolerance compare.
+	weaver::float8 expected{ 2.0f, 3.0f, 4.0f, 5.0f, 1.0f, 10.0f, 8.0f, 6.0f };
+	REQUIRE(weaver::all(weaver::equal(sqrt_float8(a), expected, weaver::float8{ 1e-5f })));
 }

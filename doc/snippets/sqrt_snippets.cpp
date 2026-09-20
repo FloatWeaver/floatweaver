@@ -21,5 +21,10 @@ TEST_CASE("Square root float8", "[doc]")
 	weaver::float8 r = weaver::sqrt(x);
 	//! [Square root float8]
 
-	REQUIRE(weaver::all(r == weaver::float8{ 2.0f, 3.0f, 4.0f, 5.0f, 1.0f, 10.0f, 8.0f, 6.0f }));
+	// Not every backend has a native sqrt instruction -- NEON without one
+	// builds it from an approximate rsqrt, so this isn't bit-exact across
+	// backends and is compared with a tolerance like the library's own
+	// "Sqrt FloatN" test (src/tests/simd.cpp) does.
+	weaver::float8 expected{ 2.0f, 3.0f, 4.0f, 5.0f, 1.0f, 10.0f, 8.0f, 6.0f };
+	REQUIRE(weaver::all(weaver::equal(r, expected, weaver::float8{ 1e-5f })));
 }
