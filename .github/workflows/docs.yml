@@ -1,0 +1,98 @@
+name: Documentation
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+# Only one Pages deployment at a time; a push while one is still running
+# waits for it rather than racing it, but never cancels an in-progress
+# deployment (a half-published site would be worse than a delayed one).
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('doc/requirements.txt') }}
+          restore-keys: pip-${{ runner.os }}-
+
+      - name: Install Conan2 and Sphinx/Breathe
+        run: |
+          pip install conan
+          pip install -r doc/requirements.txt
+
+      - name: Cache Conan dependencies
+        id: conan-cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2
+          key: conan2-${{ runner.os }}-docs-${{ hashFiles('**/conanfile.*') }}
+          restore-keys: conan2-${{ runner.os }}-docs-
+
+      - name: Detect default Conan profile
+        if: steps.conan-cache.outputs.cache-hit != 'true'
+        run: conan profile detect
+
+      - name: Install Conan Dependencies
+        run: conan install --build=missing -of ${{ github.workspace }}/build ${{ github.workspace }}
+
+      - name: Configure CMake
+        run: >
+          cmake -S ${{ github.workspace }}
+          -B ${{ github.workspace }}/build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/build/build/Release/generators/conan_toolchain.cmake
+          -DWEAVER_BUILD_DOCS=ON
+
+      # Sphinx runs with -W (warnings-as-errors, set in the `docs` CMake
+      # target): a literalinclude tag that no longer exists, or a
+      # weaver-asm symbol that got inlined away/renamed, fails the build
+      # here instead of silently shipping a blank/stale code block. objdump
+      # (for the weaver-asm assembly listings) and Python3 both ship with
+      # ubuntu-latest already, no separate install needed.
+      - name: Build documentation
+        run: cmake --build ${{ github.workspace }}/build --target docs
+
+      # Runs on every push and PR (see above), but the artifact is only ever
+      # deployed by the `deploy` job below, which is gated to pushes on
+      # `main` -- so a PR still gets full build validation without
+      # publishing whatever's in the PR branch.
+      - name: Upload documentation artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ github.workspace }}/build/sphinx
+
+  deploy:
+    needs: docs
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

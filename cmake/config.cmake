@@ -31,6 +31,8 @@ set(WEAVER_VECTORIZE "SSE 4.2" CACHE STRING "Vectorization instruction set")
 set_property(CACHE WEAVER_VECTORIZE PROPERTY STRINGS "Generic" "SSE 4.2" "AVX" "AVX 2" "AVX 512" "NEON")
 message(STATUS "Compiling for ${WEAVER_VECTORIZE}")
 
+option(WEAVER_BUILD_DOCS "Build the Doxygen/Sphinx documentation ('docs' target)" OFF)
+
 # Configure the compiler options a target
 function(weaver_configure_target tgt)
 	message(STATUS "Configure target: ${tgt}")
